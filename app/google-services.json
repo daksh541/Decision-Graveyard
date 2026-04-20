@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "564299905510",
+    "firebase_url": "https://decisiongraveyard-default-rtdb.firebaseio.com",
+    "project_id": "decisiongraveyard",
+    "storage_bucket": "decisiongraveyard.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:564299905510:android:b3a3a00d6b744578bd7e27",
+        "android_client_info": {
+          "package_name": "com.example.decisiongraveyard"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "564299905510-4dbpsnm9u4qnvmlhjimcmpnll4vrngup.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.decisiongraveyard",
+            "certificate_hash": "97e466b60fe9e4a4efa139d76326f192f579045b"
+          }
+        },
+        {
+          "client_id": "564299905510-414uef8bin5l3r9fp120hshj1qn7mkq2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBoqcX312M7nK8r5sQS4huv-z1iD54gdnk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "564299905510-414uef8bin5l3r9fp120hshj1qn7mkq2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
