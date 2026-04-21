@@ -11,6 +11,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.sai.decisiongraveyard.R;
@@ -51,6 +52,7 @@ public class TimelineFragment extends Fragment {
 
     private void setupRecyclerView() {
         adapter = new TimelineDayAdapter(Collections.emptyList());
+        recyclerViewTimeline.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerViewTimeline.setAdapter(adapter);
     }
 
@@ -81,9 +83,17 @@ public class TimelineFragment extends Fragment {
             public void onError(String error) {
                 requireActivity().runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
+                    tvEmptyState.setVisibility(View.VISIBLE);
+                    recyclerViewTimeline.setVisibility(View.GONE);
                     Toast.makeText(getContext(), error, Toast.LENGTH_SHORT).show();
                 });
             }
         });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadTimeline();
     }
 }

@@ -44,6 +44,27 @@ public class TimelineEvent {
         return event;
     }
 
+    public static TimelineEvent fromDecisionRecord(DecisionRecord record) {
+        Decision decision = record.getDecision();
+        TimelineEvent event = new TimelineEvent();
+        event.setEventType("decision");
+        event.setTitle(decision.getTitle());
+        event.setCategory(decision.getCategory());
+        event.setTimestamp(decision.getDecisionTime());
+        event.setUserId(decision.getUserId());
+        event.setDescription(decision.getDescription());
+
+        if (record.isEvaluated()) {
+            String outcome = record.getEvaluation().getOutcome();
+            event.setOutcome(outcome);
+            event.setStatus(outcome == null ? "pending" : outcome.toLowerCase());
+        } else {
+            event.setStatus("pending");
+        }
+
+        return event;
+    }
+
     public static TimelineEvent fromActivity(Activity activity) {
         TimelineEvent event = new TimelineEvent();
         event.setEventType("activity");

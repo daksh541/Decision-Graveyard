@@ -8,6 +8,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -37,6 +38,7 @@ public class LoginActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private AuthHelper authHelper;
     private GoogleSignInClient googleSignInClient;
+    private android.widget.TextView tvForgotPassword;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,11 +61,12 @@ public class LoginActivity extends AppCompatActivity {
         btnLogin = findViewById(R.id.btnLogin);
         btnRegister = findViewById(R.id.btnRegister);
         progressBar = findViewById(R.id.progressBar);
+        tvForgotPassword = findViewById(R.id.tvForgotPassword);
 
         btnLogin.setOnClickListener(v -> loginUser());
         btnRegister.setOnClickListener(v ->
                 startActivity(new Intent(LoginActivity.this, RegisterActivity.class)));
-
+        tvForgotPassword.setOnClickListener(v -> resetPassword());
         findViewById(R.id.btnGoogleSignIn).setOnClickListener(v -> signInWithGoogle());
     }
 
@@ -98,10 +101,40 @@ public class LoginActivity extends AppCompatActivity {
         setLoading(true);
         authHelper.login(email, password, new AuthHelper.AuthCallback() {
             @Override
-            public void onSuccess(@NonNull FirebaseUser user) {
+            public void onSuccess(@Nullable FirebaseUser user) {
                 setLoading(false);
                 Toast.makeText(LoginActivity.this, "Login successful.", Toast.LENGTH_SHORT).show();
                 navigateToMain();
+            }
+
+            @Override
+            public void onError(@NonNull String message) {
+                setLoading(false);
+                Toast.makeText(LoginActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void resetPassword() {
+        tilEmail.setError(null);
+
+        String email = etEmail.getText() == null ? "" : etEmail.getText().toString().trim();
+
+        if (email.isEmpty()) {
+            tilEmail.setError("Email is required to reset password.");
+            return;
+        }
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            tilEmail.setError("Enter a valid email address.");
+            return;
+        }
+
+        setLoading(true);
+        authHelper.resetPassword(email, new AuthHelper.AuthCallback() {
+            @Override
+            public void onSuccess(@Nullable FirebaseUser user) {
+                setLoading(false);
+                Toast.makeText(LoginActivity.this, "Password reset email sent. Check your inbox.", Toast.LENGTH_LONG).show();
             }
 
             @Override
@@ -128,7 +161,7 @@ public class LoginActivity extends AppCompatActivity {
                 GoogleSignInAccount account = task.getResult(ApiException.class);
                 authHelper.signInWithGoogle(account, new AuthHelper.AuthCallback() {
                     @Override
-                    public void onSuccess(@NonNull FirebaseUser user) {
+                    public void onSuccess(@Nullable FirebaseUser user) {
                         setLoading(false);
                         Toast.makeText(LoginActivity.this, "Google sign-in successful.", Toast.LENGTH_SHORT).show();
                         navigateToMain();

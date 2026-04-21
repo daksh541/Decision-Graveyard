@@ -5,19 +5,19 @@
         android:icon="@drawable/ic_home"
         android:title="Dashboard" />
     <item
-        android:id="@+id/nav_home"
-        android:icon="@drawable/ic_home"
-        android:title="@string/home" />
+        android:id="@+id/nav_activities"
+        android:icon="@drawable/ic_activities"
+        android:title="@string/activities" />
     <item
-        android:id="@+id/nav_add"
-        android:icon="@drawable/ic_add"
-        android:title="@string/add_decision" />
+        android:id="@+id/nav_decisions"
+        android:icon="@drawable/ic_decisions"
+        android:title="@string/decisions" />
+    <item
+        android:id="@+id/nav_timeline"
+        android:icon="@drawable/ic_timeline"
+        android:title="@string/timeline" />
     <item
         android:id="@+id/nav_insights"
         android:icon="@drawable/ic_insights"
-        android:title="Analytics" />
-    <item
-        android:id="@+id/nav_settings"
-        android:icon="@drawable/ic_profile"
-        android:title="Settings" />
+        android:title="@string/insights" />
 </menu>

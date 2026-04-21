@@ -91,39 +91,32 @@ public class DashboardViewModel extends AndroidViewModel {
         long todayEnd = getTodayEnd();
 
         new Thread(() -> {
+            int todayActivityCount = 0;
+            int todayDecisionCount = 0;
+
             try {
                 List<com.sai.decisiongraveyard.model.Activity> activities = activityRepository.getActivitiesForDay(todayStart, todayEnd);
-                todayActivitiesCount.postValue(activities.size());
-                checkLoadingComplete();
+                todayActivityCount = activities.size();
             } catch (Exception e) {
                 errorMessage.postValue("Error loading activities: " + e.getMessage());
-                checkLoadingComplete();
             }
 
             try {
                 List<com.sai.decisiongraveyard.model.DecisionRecord> records = decisionRepository.getAllDecisionRecords();
-                int todayCount = 0;
                 for (com.sai.decisiongraveyard.model.DecisionRecord record : records) {
                     long decisionTime = record.getDecision().getDecisionTime();
                     if (decisionTime >= todayStart && decisionTime <= todayEnd) {
-                        todayCount++;
+                        todayDecisionCount++;
                     }
                 }
-                todayDecisionsCount.postValue(todayCount);
-                checkLoadingComplete();
             } catch (Exception e) {
                 errorMessage.postValue("Error loading decisions: " + e.getMessage());
-                checkLoadingComplete();
+            } finally {
+                todayActivitiesCount.postValue(todayActivityCount);
+                todayDecisionsCount.postValue(todayDecisionCount);
+                isLoading.postValue(false);
             }
         }).start();
-    }
-
-    private void checkLoadingComplete() {
-        if (userProfile.getValue() != null && 
-            (todayActivitiesCount.getValue() != null || todayActivitiesCount.hasObservers()) && 
-            (todayDecisionsCount.getValue() != null || todayDecisionsCount.hasObservers())) {
-            isLoading.postValue(false);
-        }
     }
 
     private long getTodayStart() {

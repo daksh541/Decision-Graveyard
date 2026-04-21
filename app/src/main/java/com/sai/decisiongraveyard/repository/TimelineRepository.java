@@ -104,7 +104,7 @@ public class TimelineRepository {
                 String dayKey = getDayKey(decision.getDecisionTime());
                 TimelineDay day = dayMap.getOrDefault(dayKey, new TimelineDay(dayKey, decision.getDecisionTime()));
                 
-                TimelineEvent event = TimelineEvent.fromDecision(decision);
+                TimelineEvent event = TimelineEvent.fromDecisionRecord(record);
                 day.events.add(event);
                 day.decisionCount++;
                 

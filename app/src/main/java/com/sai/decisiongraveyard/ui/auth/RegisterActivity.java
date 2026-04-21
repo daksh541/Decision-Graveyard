@@ -10,6 +10,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import androidx.annotation.Nullable;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -98,7 +99,7 @@ public class RegisterActivity extends AppCompatActivity {
         setLoading(true);
         authHelper.register(email, password, new AuthHelper.AuthCallback() {
             @Override
-            public void onSuccess(@NonNull FirebaseUser user) {
+            public void onSuccess(@Nullable FirebaseUser user) {
                 setLoading(false);
                 Toast.makeText(RegisterActivity.this, "Account created successfully.", Toast.LENGTH_SHORT).show();
                 navigateToMain();

@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment;
 
 import com.sai.decisiongraveyard.R;
 import com.sai.decisiongraveyard.model.UserProfile;
+import com.sai.decisiongraveyard.repository.RepositoryProvider;
 import com.sai.decisiongraveyard.ui.achievements.AchievementManager;
 import com.sai.decisiongraveyard.viewmodel.DashboardViewModel;
 
@@ -56,6 +57,10 @@ public class DashboardFragment extends Fragment {
         ).get(DashboardViewModel.class);
         bindViews(view);
         observeViewModel();
+
+        RepositoryProvider provider = RepositoryProvider.getInstance(requireContext());
+        provider.getDecisionRepository().getDataChangedTrigger().observe(getViewLifecycleOwner(), trigger -> viewModel.loadDashboardData());
+        provider.getActivityRepository().getDataChangedTrigger().observe(getViewLifecycleOwner(), trigger -> viewModel.loadDashboardData());
     }
 
     private void bindViews(View view) {
@@ -179,6 +184,14 @@ public class DashboardFragment extends Fragment {
         } else {
             tvWeeklySummary.setText("Start today");
             tvWeeklySummary.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary));
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (viewModel != null) {
+            viewModel.loadDashboardData();
         }
     }
 }

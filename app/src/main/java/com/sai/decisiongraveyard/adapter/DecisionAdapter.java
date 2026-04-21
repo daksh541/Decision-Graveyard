@@ -19,6 +19,8 @@ import com.sai.decisiongraveyard.model.Decision;
 import com.sai.decisiongraveyard.model.DecisionRecord;
 import com.sai.decisiongraveyard.util.DateUtils;
 
+import java.util.Objects;
+
 public class DecisionAdapter extends ListAdapter<DecisionRecord, DecisionAdapter.DecisionViewHolder> {
 
     public interface OnDecisionClickListener {
@@ -50,9 +52,9 @@ public class DecisionAdapter extends ListAdapter<DecisionRecord, DecisionAdapter
 
         @Override
         public boolean areContentsTheSame(@NonNull DecisionRecord oldItem, @NonNull DecisionRecord newItem) {
-            return oldItem.getDecision().getTitle().equals(newItem.getDecision().getTitle()) &&
+            return Objects.equals(oldItem.getDecision().getTitle(), newItem.getDecision().getTitle()) &&
                     oldItem.isEvaluated() == newItem.isEvaluated() &&
-                    oldItem.getOutcomeOrPending().equals(newItem.getOutcomeOrPending());
+                    Objects.equals(oldItem.getOutcomeOrPending(), newItem.getOutcomeOrPending());
         }
     };
 
@@ -61,7 +63,11 @@ public class DecisionAdapter extends ListAdapter<DecisionRecord, DecisionAdapter
         DecisionRecord record = getItem(position);
         Decision decision = record.getDecision();
 
-        holder.tvDecisionTitle.setText(decision.getTitle());
+        holder.tvDecisionTitle.setText(
+                decision.getTitle() == null || decision.getTitle().trim().isEmpty()
+                        ? "Untitled decision"
+                        : decision.getTitle()
+        );
 
         // Set category chip
         String category = decision.getCategory();

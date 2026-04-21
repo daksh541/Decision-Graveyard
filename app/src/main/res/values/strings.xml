@@ -3,11 +3,13 @@
     <string name="home">Home</string>
     <string name="dashboard">Dashboard</string>
     <string name="activities">Activities</string>
+    <string name="decisions">Decisions</string>
     <string name="add_decision">Add Decision</string>
     <string name="timeline">Timeline</string>
     <string name="insights">Insights</string>
     <string name="settings">Settings</string>
     <string name="profile">Profile</string>
+    <string name="overview">Overview</string>
     <string name="dark_mode">Dark mode</string>
     <string name="toggle_theme">Toggle Theme</string>
 
@@ -49,6 +51,7 @@
     <string name="empty_insights_title">Not enough data</string>
     <string name="empty_insights_body">Bury and judge some decisions first. Then we\'ll expose your patterns.</string>
     <string name="empty_decisions_action">Bury First Decision</string>
+    <string name="new_decision">New Decision</string>
 
     <!-- Swipe Actions -->
     <string name="swipe_good">Good call</string>
@@ -93,6 +96,12 @@
     <string name="logout">Logout</string>
     <string name="logout_confirmation">Are you sure you want to logout?</string>
     <string name="account_info">Account</string>
+    <string name="profile_stats">Your Stats</string>
+    <string name="profile_activity_rate">Activity completion rate</string>
+    <string name="profile_discipline_streak">Discipline streak</string>
+    <string name="profile_level_unknown">Profile loading</string>
+    <string name="profile_xp_unavailable">XP data unavailable</string>
+    <string name="profile_member_unknown">Recently</string>
     <string name="total_decisions">Total decisions</string>
     <string name="evaluated_decisions">Judgments made</string>
     <string name="pending_decisions">Waiting for judgment</string>

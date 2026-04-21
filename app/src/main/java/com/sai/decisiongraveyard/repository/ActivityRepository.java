@@ -187,16 +187,24 @@ public class ActivityRepository {
         String userId = requireUserId();
         Log.d(TAG, "Fetching activities for day: " + dayStartMillis + " to " + dayEndMillis);
 
+        // Filter in memory to avoid requiring a composite Firestore index on userId + scheduledTime.
         QuerySnapshot snapshot = await(
                 firestore.collection("activities")
                         .whereEqualTo("userId", userId)
-                        .whereGreaterThanOrEqualTo("scheduledTime", dayStartMillis)
-                        .whereLessThan("scheduledTime", dayEndMillis)
                         .get()
         );
 
-        Log.d(TAG, "Fetched " + snapshot.size() + " activities for the day");
-        return mapActivities(snapshot);
+        List<Activity> allActivities = mapActivities(snapshot);
+        List<Activity> dayActivities = new ArrayList<>();
+        for (Activity activity : allActivities) {
+            long scheduledTime = activity.getScheduledTime();
+            if (scheduledTime >= dayStartMillis && scheduledTime < dayEndMillis) {
+                dayActivities.add(activity);
+            }
+        }
+
+        Log.d(TAG, "Filtered " + dayActivities.size() + " activities for the day from " + allActivities.size() + " total");
+        return dayActivities;
     }
 
     public List<Activity> getMissedActivities() {
@@ -227,16 +235,21 @@ public class ActivityRepository {
         String userId = requireUserId();
         long now = System.currentTimeMillis();
         long sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
+        Log.d(TAG, "Detecting failure pattern for userId: " + userId);
 
         QuerySnapshot snapshot = await(
                 firestore.collection("activities")
                         .whereEqualTo("userId", userId)
-                        .whereGreaterThanOrEqualTo("scheduledTime", sevenDaysAgo)
-                        .whereLessThan("scheduledTime", now)
                         .get()
         );
 
-        List<Activity> activities = mapActivities(snapshot);
+        List<Activity> activities = new ArrayList<>();
+        for (Activity activity : mapActivities(snapshot)) {
+            long scheduledTime = activity.getScheduledTime();
+            if (scheduledTime >= sevenDaysAgo && scheduledTime < now) {
+                activities.add(activity);
+            }
+        }
         List<String> consecutiveMisses = new ArrayList<>();
         String mostMissedCategory = "";
         int totalMisses = 0;

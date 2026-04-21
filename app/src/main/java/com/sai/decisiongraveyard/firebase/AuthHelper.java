@@ -23,7 +23,7 @@ import java.util.Map;
 public class AuthHelper {
 
     public interface AuthCallback {
-        void onSuccess(@NonNull FirebaseUser user);
+        void onSuccess(@Nullable FirebaseUser user);
 
         void onError(@NonNull String message);
     }
@@ -54,7 +54,7 @@ public class AuthHelper {
                         callback.onError("Login failed. Please try again.");
                         return;
                     }
-                    upsertUserDocument(user, true, callback);
+                    upsertUserDocument(user, callback);
                 })
                 .addOnFailureListener(exception -> callback.onError(mapAuthError(exception)));
     }
@@ -68,13 +68,19 @@ public class AuthHelper {
                         callback.onError("Couldn't create your account. Please try again.");
                         return;
                     }
-                    upsertUserDocument(user, true, callback);
+                    upsertUserDocument(user, callback);
                 })
                 .addOnFailureListener(exception -> callback.onError(mapAuthError(exception)));
     }
 
     public void logout() {
         firebaseAuth.signOut();
+    }
+
+    public void resetPassword(String email, @NonNull AuthCallback callback) {
+        firebaseAuth.sendPasswordResetEmail(email)
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(exception -> callback.onError(mapAuthError(exception)));
     }
 
     public void signInWithGoogle(GoogleSignInAccount account, @NonNull AuthCallback callback) {
@@ -87,18 +93,15 @@ public class AuthHelper {
                         callback.onError("Google sign-in failed. Please try again.");
                         return;
                     }
-                    upsertUserDocument(user, true, callback);
+                    upsertUserDocument(user, callback);
                 })
                 .addOnFailureListener(exception -> callback.onError(mapAuthError(exception)));
     }
 
-    private void upsertUserDocument(@NonNull FirebaseUser user, boolean signOutOnFailure,
-                                    @NonNull AuthCallback callback) {
+    private void upsertUserDocument(@NonNull FirebaseUser user, @NonNull AuthCallback callback) {
         String email = user.getEmail();
         if (email == null || email.trim().isEmpty()) {
-            if (signOutOnFailure) {
-                firebaseAuth.signOut();
-            }
+            firebaseAuth.signOut();
             callback.onError("Your account is missing an email address. Please try again.");
             return;
         }
@@ -120,16 +123,12 @@ public class AuthHelper {
                             .set(userData, SetOptions.merge())
                             .addOnSuccessListener(unused -> callback.onSuccess(user))
                             .addOnFailureListener(exception -> {
-                                if (signOutOnFailure) {
-                                    firebaseAuth.signOut();
-                                }
+                                firebaseAuth.signOut();
                                 callback.onError(mapFirestoreError(exception));
                             });
                 })
                 .addOnFailureListener(exception -> {
-                    if (signOutOnFailure) {
-                        firebaseAuth.signOut();
-                    }
+                    firebaseAuth.signOut();
                     callback.onError(mapFirestoreError(exception));
                 });
     }

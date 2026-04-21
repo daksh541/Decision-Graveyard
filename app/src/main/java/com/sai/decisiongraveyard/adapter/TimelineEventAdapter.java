@@ -1,6 +1,5 @@
 package com.sai.decisiongraveyard.adapter;
 
-import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -59,8 +58,10 @@ public class TimelineEventAdapter extends RecyclerView.Adapter<TimelineEventAdap
         }
 
         public void bind(TimelineEvent event) {
-            tvEventTitle.setText(event.getTitle());
-            tvEventCategory.setText(capitalize(event.getCategory()));
+            String title = event.getTitle();
+            String category = event.getCategory();
+            tvEventTitle.setText(title == null || title.trim().isEmpty() ? "Untitled event" : title);
+            tvEventCategory.setText(category == null || category.trim().isEmpty() ? "General" : capitalize(category));
             
             // Set color based on status
             int color;
@@ -76,9 +77,8 @@ public class TimelineEventAdapter extends RecyclerView.Adapter<TimelineEventAdap
                 color = itemView.getContext().getColor(android.R.color.darker_gray);
                 statusText = "Pending";
             }
-            
-            GradientDrawable drawable = (GradientDrawable) viewColorIndicator.getBackground();
-            drawable.setColor(color);
+
+            viewColorIndicator.setBackgroundColor(color);
             
             tvEventStatus.setText(statusText);
             tvEventStatus.setTextColor(color);

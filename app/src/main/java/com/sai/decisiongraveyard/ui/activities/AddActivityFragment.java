@@ -80,20 +80,7 @@ public class AddActivityFragment extends Fragment {
             Toast.makeText(requireContext(), saveState.message, Toast.LENGTH_SHORT).show();
             if (saveState.success) {
                 clearForm();
-                try {
-                    BottomNavigationView bottomNav = requireActivity().findViewById(R.id.bottomNavigation);
-                    if (bottomNav != null) {
-                        bottomNav.setSelectedItemId(R.id.nav_home);
-                    } else {
-                        // If bottomNav is null, we might be in a different navigation context
-                        // Fallback to manually loading the fragment via MainActivity if possible
-                        if (requireActivity() instanceof MainActivity) {
-                            ((MainActivity) requireActivity()).loadFragment(new ActivityListFragment());
-                        }
-                    }
-                } catch (Exception e) {
-                    android.util.Log.e("AddActivityFragment", "Navigation failed: " + e.getMessage(), e);
-                }
+                returnToActivityList();
             } else if ("Title is required.".equals(saveState.message)) {
                 layoutTitle.setError(saveState.message);
             }
@@ -189,5 +176,23 @@ public class AddActivityFragment extends Fragment {
         actCategory.setText("Study", false);
         scheduledTimeMillis = 0;
         updateScheduledTimePreview();
+    }
+
+    private void returnToActivityList() {
+        if (!isAdded()) {
+            return;
+        }
+
+        if (requireActivity().getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            requireActivity().getSupportFragmentManager().popBackStack();
+            return;
+        }
+
+        BottomNavigationView bottomNav = requireActivity().findViewById(R.id.bottomNavigation);
+        if (bottomNav != null) {
+            bottomNav.setSelectedItemId(R.id.nav_activities);
+        } else if (requireActivity() instanceof MainActivity) {
+            ((MainActivity) requireActivity()).navigateToTab(R.id.nav_activities);
+        }
     }
 }

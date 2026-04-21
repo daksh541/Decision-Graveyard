@@ -80,8 +80,12 @@ public class ActivityAdapter extends ListAdapter<Activity, ActivityAdapter.Activ
 
         public void bind(Activity activity, OnActivityClickListener listener) {
             tvTitle.setText(activity.getTitle());
-            tvCategory.setText(activity.getCategory().substring(0, 1).toUpperCase() + 
-                    activity.getCategory().substring(1));
+            String category = activity.getCategory();
+            if (category == null || category.trim().isEmpty()) {
+                tvCategory.setText("General");
+            } else {
+                tvCategory.setText(category.substring(0, 1).toUpperCase() + category.substring(1));
+            }
             tvScheduledTime.setText("Scheduled: " + DateUtils.formatDateTime(activity.getScheduledTime()));
 
             String status = activity.getStatus();

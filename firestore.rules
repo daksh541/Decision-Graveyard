@@ -21,6 +21,18 @@ service cloud.firestore {
         && request.resource.data.userId == request.auth.uid;
     }
 
+    match /userProfiles/{userId} {
+      allow create: if isSignedIn()
+        && request.auth.uid == userId
+        && request.resource.data.userId == request.auth.uid;
+      allow read, delete: if isSignedIn()
+        && request.auth.uid == userId
+        && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn()
+        && request.auth.uid == userId
+        && request.resource.data.userId == resource.data.userId;
+    }
+
     match /decisions/{docId} {
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid;
@@ -35,9 +47,9 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid;
       allow read, delete: if isSignedIn()
-        && request.resource.data.userId == request.auth.uid;
+        && resource.data.userId == request.auth.uid;
       allow update: if isSignedIn()
-        && request.resource.data.userId == request.auth.uid
+        && resource.data.userId == request.auth.uid
         && request.resource.data.userId == resource.data.userId;
     }
 
@@ -66,6 +78,36 @@ service cloud.firestore {
     }
 
     match /dailyCheckIns/{docId} {
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+      allow read, delete: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId;
+    }
+
+    match /analytics/{docId} {
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+      allow read, delete: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId;
+    }
+
+    match /timeline/{docId} {
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+      allow read, delete: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId;
+    }
+
+    match /checkins/{docId} {
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid;
       allow read, delete: if isSignedIn()

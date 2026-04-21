@@ -38,7 +38,9 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.textfield.TextInputLayout;
+import com.sai.decisiongraveyard.MainActivity;
 import com.sai.decisiongraveyard.R;
+import com.sai.decisiongraveyard.model.DecisionRecord;
 import com.sai.decisiongraveyard.notifications.NotificationScheduler;
 import com.sai.decisiongraveyard.repository.DecisionRepository;
 import com.sai.decisiongraveyard.util.DateUtils;
@@ -77,40 +79,6 @@ public class AddDecisionFragment extends Fragment {
         return new AddDecisionFragment();
     }
 
-    private void showChoiceDialog() {
-        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("What would you like to add?")
-                .setItems(new CharSequence[]{"Decision", "Activity"}, (dialog, which) -> {
-                    if (which == 0) {
-                        // Stay on decision form (do nothing)
-                    } else if (which == 1) {
-                        // Navigate to Activity form
-                        try {
-                            androidx.appcompat.app.AppCompatActivity activity = 
-                                    (androidx.appcompat.app.AppCompatActivity) requireActivity();
-                            activity.getSupportFragmentManager().beginTransaction()
-                                    .replace(R.id.fragmentContainer, new com.sai.decisiongraveyard.ui.activities.AddActivityFragment())
-                                    .addToBackStack(null)
-                                    .commit();
-                        } catch (Exception e) {
-                            android.util.Log.e("AddDecisionFragment", "Navigation failed: " + e.getMessage(), e);
-                        }
-                    }
-                })
-                .setOnCancelListener(dialog -> {
-                    // Go back to home if cancelled
-                    try {
-                        BottomNavigationView bottomNav = requireActivity().findViewById(R.id.bottomNavigation);
-                        if (bottomNav != null) {
-                            bottomNav.setSelectedItemId(R.id.nav_home);
-                        }
-                    } catch (Exception e) {
-                        android.util.Log.e("AddDecisionFragment", "Navigation failed: " + e.getMessage(), e);
-                    }
-                })
-                .show();
-    }
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         rootView = inflater.inflate(R.layout.fragment_add_decision, container, false);
@@ -120,9 +88,6 @@ public class AddDecisionFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        // Show dialog to choose between Decision or Activity
-        showChoiceDialog();
 
         viewModel = new ViewModelProvider(
                 this,
@@ -164,18 +129,12 @@ public class AddDecisionFragment extends Fragment {
                         saveState.evaluationTime
                 );
                 clearForm();
-                // Navigate to home using bottom navigation instead of finishing activity
-                try {
-                    BottomNavigationView bottomNav = requireActivity().findViewById(R.id.bottomNavigation);
-                    if (bottomNav != null) {
-                        bottomNav.setSelectedItemId(R.id.nav_home);
-                    }
-                } catch (Exception e) {
-                    android.util.Log.e("AddDecisionFragment", "Navigation failed: " + e.getMessage(), e);
-                    // Fallback: just clear the form
-                }
+                returnToDecisionList();
             } else if ("Title is required.".equals(saveState.message)) {
                 layoutTitle.setError(saveState.message);
+                restoreFormAfterFailedSave();
+            } else {
+                restoreFormAfterFailedSave();
             }
             viewModel.clearSaveState();
         });
@@ -258,17 +217,29 @@ public class AddDecisionFragment extends Fragment {
     }
 
     private int calculateRegretRate(String category) {
-        // This would normally query the repository for actual stats
-        // For now, returning placeholder values based on category
-        switch (category) {
-            case "money": return 45;
-            case "health": return 25;
-            case "study": return 30;
-            case "personal": return 55;
-            case "work": return 40;
-            case "relationship": return 60;
-            default: return 0;
+        int evaluatedCount = 0;
+        int badCount = 0;
+
+        for (DecisionRecord record : decisionRepository.getAllDecisionRecords()) {
+            if (!record.isEvaluated()) {
+                continue;
+            }
+
+            String recordCategory = record.getDecision().getCategory();
+            if (recordCategory == null || !recordCategory.equalsIgnoreCase(category)) {
+                continue;
+            }
+
+            evaluatedCount++;
+            if ("bad".equalsIgnoreCase(record.getEvaluation().getOutcome())) {
+                badCount++;
+            }
         }
+
+        if (evaluatedCount == 0) {
+            return 0;
+        }
+        return (int) Math.round(badCount * 100.0 / evaluatedCount);
     }
 
     private void animateRiskProgress(int targetProgress) {
@@ -622,5 +593,27 @@ public class AddDecisionFragment extends Fragment {
         viewModel.clearCustomDate();
         cardRiskMeter.setVisibility(View.GONE);
         updateFutureYouPreview();
+    }
+
+    private void restoreFormAfterFailedSave() {
+        if (rootView != null) {
+            rootView.animate().cancel();
+            rootView.setAlpha(1f);
+        }
+    }
+
+    private void returnToDecisionList() {
+        if (!isAdded()) {
+            return;
+        }
+
+        if (requireActivity().getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            requireActivity().getSupportFragmentManager().popBackStack();
+            return;
+        }
+
+        if (requireActivity() instanceof MainActivity) {
+            ((MainActivity) requireActivity()).navigateToTab(R.id.nav_decisions);
+        }
     }
 }

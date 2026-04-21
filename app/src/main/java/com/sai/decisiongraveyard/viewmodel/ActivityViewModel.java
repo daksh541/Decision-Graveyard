@@ -7,14 +7,13 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.google.firebase.firestore.ListenerRegistration;
 import com.sai.decisiongraveyard.model.Activity;
 import com.sai.decisiongraveyard.repository.ActivityRepository;
 import com.sai.decisiongraveyard.repository.RepositoryProvider;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class ActivityViewModel extends AndroidViewModel {
 
@@ -29,14 +28,16 @@ public class ActivityViewModel extends AndroidViewModel {
     }
 
     private final ActivityRepository repository;
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final MutableLiveData<SaveState> saveState = new MutableLiveData<>();
-    private final MutableLiveData<List<Activity>> activities = new MutableLiveData<>();
+    private final MutableLiveData<List<Activity>> activities = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<String> statusFilter = new MutableLiveData<>("all");
+    private final List<Activity> cachedActivities = new ArrayList<>();
+    private ListenerRegistration registration;
 
     public ActivityViewModel(@NonNull Application application) {
         super(application);
         repository = RepositoryProvider.getInstance(application).getActivityRepository();
+        startListening();
     }
 
     public LiveData<SaveState> getSaveState() {
@@ -53,17 +54,28 @@ public class ActivityViewModel extends AndroidViewModel {
 
     public void setStatusFilter(String filter) {
         statusFilter.setValue(filter);
+        postFilteredActivities();
     }
 
     public void refresh() {
-        loadActivities();
+        if (registration == null) {
+            startListening();
+            return;
+        }
+        postFilteredActivities();
     }
 
-    private void loadActivities() {
-        repository.listenToActivities(new ActivityRepository.ActivityListListener() {
+    private void startListening() {
+        if (registration != null) {
+            registration.remove();
+        }
+
+        registration = repository.listenToActivities(new ActivityRepository.ActivityListListener() {
             @Override
             public void onChanged(@NonNull List<Activity> activityList) {
-                activities.postValue(filterActivities(activityList, statusFilter.getValue()));
+                cachedActivities.clear();
+                cachedActivities.addAll(activityList);
+                postFilteredActivities();
             }
 
             @Override
@@ -73,17 +85,19 @@ public class ActivityViewModel extends AndroidViewModel {
         });
     }
 
+    private void postFilteredActivities() {
+        activities.postValue(filterActivities(new ArrayList<>(cachedActivities), statusFilter.getValue()));
+    }
+
     private List<Activity> filterActivities(List<Activity> allActivities, String filter) {
         if (filter == null || "all".equals(filter)) {
             return allActivities;
         }
 
         List<Activity> filtered = new ArrayList<>();
-        long now = System.currentTimeMillis();
-
         for (Activity activity : allActivities) {
             String status = activity.getStatus();
-            if (filter.equals(status)) {
+            if (status != null && filter.equals(status)) {
                 filtered.add(activity);
             }
         }
@@ -164,6 +178,9 @@ public class ActivityViewModel extends AndroidViewModel {
     @Override
     protected void onCleared() {
         super.onCleared();
-        executorService.shutdownNow();
+        if (registration != null) {
+            registration.remove();
+            registration = null;
+        }
     }
 }

@@ -22,14 +22,11 @@ import com.sai.decisiongraveyard.notifications.ActivityScheduler;
 import com.sai.decisiongraveyard.notifications.NotificationScheduler;
 import com.sai.decisiongraveyard.notifications.SmartNotificationScheduler;
 import com.sai.decisiongraveyard.repository.DecisionRepository;
-import com.sai.decisiongraveyard.ui.add.AddDecisionFragment;
 import com.sai.decisiongraveyard.ui.activities.ActivityListFragment;
-import com.sai.decisiongraveyard.ui.ai.AIAnalysisFragment;
 import com.sai.decisiongraveyard.ui.checkin.DailyCheckInDialog;
-import com.sai.decisiongraveyard.ui.dashboard.DashboardFragment;
+import com.sai.decisiongraveyard.ui.dashboard.DashboardContainerFragment;
 import com.sai.decisiongraveyard.ui.home.HomeFragment;
 import com.sai.decisiongraveyard.ui.insights.InsightsFragment;
-import com.sai.decisiongraveyard.ui.profile.ProfileFragment;
 import com.sai.decisiongraveyard.ui.settings.SettingsFragment;
 import com.sai.decisiongraveyard.ui.timeline.TimelineFragment;
 import com.sai.decisiongraveyard.adapter.DecisionAdapter;
@@ -75,7 +72,7 @@ public class MainActivity extends AppCompatActivity implements DecisionAdapter.O
 
         // Load default fragment
         if (savedInstanceState == null) {
-            loadFragment(new DashboardFragment());
+            loadFragment(new DashboardContainerFragment());
             bottomNavigationView.setSelectedItemId(R.id.nav_dashboard);
         }
     }
@@ -186,33 +183,7 @@ public class MainActivity extends AppCompatActivity implements DecisionAdapter.O
     }
 
     private void setupBottomNavigation() {
-        bottomNavigationView.setOnItemSelectedListener(item -> {
-            int itemId = item.getItemId();
-            Fragment selectedFragment = null;
-
-            if (itemId == R.id.nav_dashboard) {
-                selectedFragment = new DashboardFragment();
-                toolbar.setTitle("Dashboard");
-            } else if (itemId == R.id.nav_home) {
-                selectedFragment = new HomeFragment();
-                toolbar.setTitle(R.string.app_name);
-            } else if (itemId == R.id.nav_add) {
-                selectedFragment = new AddDecisionFragment();
-                toolbar.setTitle(R.string.add_decision);
-            } else if (itemId == R.id.nav_insights) {
-                selectedFragment = new InsightsFragment();
-                toolbar.setTitle("Analytics");
-            } else if (itemId == R.id.nav_settings) {
-                selectedFragment = new SettingsFragment();
-                toolbar.setTitle("Settings");
-            }
-
-            if (selectedFragment != null) {
-                loadFragment(selectedFragment);
-                return true;
-            }
-            return false;
-        });
+        bottomNavigationView.setOnItemSelectedListener(item -> navigateToRootDestination(item.getItemId()));
     }
 
     public void loadFragment(Fragment fragment) {
@@ -222,11 +193,27 @@ public class MainActivity extends AppCompatActivity implements DecisionAdapter.O
                 .commit();
     }
 
+    public void navigateToTab(int itemId) {
+        if (bottomNavigationView.getSelectedItemId() == itemId) {
+            navigateToRootDestination(itemId);
+            return;
+        }
+        bottomNavigationView.setSelectedItemId(itemId);
+    }
+
     private boolean onToolbarItemSelected(MenuItem item) {
         int itemId = item.getItemId();
         if (itemId == R.id.action_toggle_theme) {
             ThemeManager.toggleTheme(this);
             recreate();
+            return true;
+        } else if (itemId == R.id.action_settings) {
+            toolbar.setTitle(R.string.settings);
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragmentContainer, new SettingsFragment())
+                    .addToBackStack("settings")
+                    .commit();
             return true;
         } else if (itemId == R.id.action_logout) {
             auth.signOut();
@@ -234,6 +221,56 @@ public class MainActivity extends AppCompatActivity implements DecisionAdapter.O
             return true;
         }
         return false;
+    }
+
+    private boolean navigateToRootDestination(int itemId) {
+        Fragment selectedFragment = createRootFragment(itemId);
+        if (selectedFragment == null) {
+            return false;
+        }
+
+        getSupportFragmentManager().popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        toolbar.setTitle(getTitleForDestination(itemId));
+        loadFragment(selectedFragment);
+        return true;
+    }
+
+    private Fragment createRootFragment(int itemId) {
+        if (itemId == R.id.nav_dashboard) {
+            return new DashboardContainerFragment();
+        }
+        if (itemId == R.id.nav_activities) {
+            return new ActivityListFragment();
+        }
+        if (itemId == R.id.nav_decisions) {
+            return new HomeFragment();
+        }
+        if (itemId == R.id.nav_timeline) {
+            return new TimelineFragment();
+        }
+        if (itemId == R.id.nav_insights) {
+            return new InsightsFragment();
+        }
+        return null;
+    }
+
+    private CharSequence getTitleForDestination(int itemId) {
+        if (itemId == R.id.nav_dashboard) {
+            return getString(R.string.dashboard);
+        }
+        if (itemId == R.id.nav_activities) {
+            return getString(R.string.activities);
+        }
+        if (itemId == R.id.nav_decisions) {
+            return getString(R.string.decisions);
+        }
+        if (itemId == R.id.nav_timeline) {
+            return getString(R.string.timeline);
+        }
+        if (itemId == R.id.nav_insights) {
+            return getString(R.string.insights);
+        }
+        return getString(R.string.app_name);
     }
 
     @Override

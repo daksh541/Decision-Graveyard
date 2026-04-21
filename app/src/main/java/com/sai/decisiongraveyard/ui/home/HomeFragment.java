@@ -1,21 +1,11 @@
 package com.sai.decisiongraveyard.ui.home;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
-import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -28,10 +18,8 @@ import com.sai.decisiongraveyard.adapter.DecisionAdapter;
 import com.sai.decisiongraveyard.adapter.DecisionSwipeCallback;
 import com.sai.decisiongraveyard.model.DecisionRecord;
 import com.sai.decisiongraveyard.repository.DecisionRepository;
-import com.sai.decisiongraveyard.util.ExportUtils;
+import com.sai.decisiongraveyard.ui.add.AddDecisionFragment;
 import com.sai.decisiongraveyard.viewmodel.HomeViewModel;
-
-import java.io.IOException;
 
 public class HomeFragment extends Fragment {
 
@@ -129,13 +117,19 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        fabQuickAction.setOnClickListener(v -> showQuickActionDialog());
+        fabQuickAction.setOnClickListener(v -> openDecisionComposer());
 
         viewModel.getScreenState().observe(getViewLifecycleOwner(), state -> {
             if (state == null) {
                 return;
             }
-            tvHomeHeadline.setText(state.totalCount + " decisions total");
+            if (state.totalCount == 0) {
+                tvHomeHeadline.setText("Start logging the choices you want to review later");
+            } else {
+                tvHomeHeadline.setText(
+                        state.readyCount + " ready for review • " + state.upcomingCount + " still waiting"
+                );
+            }
             decisionAdapter.submitList(state.filteredRecords);
             tvEmptyState.setVisibility(state.filteredRecords.isEmpty() ? View.VISIBLE : View.GONE);
             recyclerView.setVisibility(state.filteredRecords.isEmpty() ? View.GONE : View.VISIBLE);
@@ -148,28 +142,11 @@ public class HomeFragment extends Fragment {
         viewModel.refresh();
     }
 
-    private void showQuickActionDialog() {
-        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
-        builder.setTitle("Quick Add");
-        builder.setItems(new CharSequence[]{"Add Decision", "Add Activity"}, (dialog, which) -> {
-            if (which == 0) {
-                // Navigate to Add Decision
-                requireActivity().findViewById(R.id.nav_add).performClick();
-            } else if (which == 1) {
-                // Navigate to Activities
-                try {
-                    androidx.appcompat.app.AppCompatActivity activity = 
-                            (androidx.appcompat.app.AppCompatActivity) requireActivity();
-                    activity.getSupportFragmentManager().beginTransaction()
-                            .replace(R.id.fragmentContainer, new com.sai.decisiongraveyard.ui.activities.ActivityListFragment())
-                            .addToBackStack(null)
-                            .commit();
-                } catch (Exception e) {
-                    android.util.Log.e("HomeFragment", "Navigation failed: " + e.getMessage(), e);
-                    android.widget.Toast.makeText(requireContext(), "Failed to navigate to activities", android.widget.Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-        builder.show();
+    private void openDecisionComposer() {
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainer, new AddDecisionFragment())
+                .addToBackStack("add_decision")
+                .commit();
     }
 }

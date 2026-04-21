@@ -16,17 +16,24 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.sai.decisiongraveyard.R;
 import com.sai.decisiongraveyard.repository.DecisionRepository;
+import com.sai.decisiongraveyard.repository.UserProfileRepository;
 import com.sai.decisiongraveyard.ui.auth.LoginActivity;
+import com.sai.decisiongraveyard.util.DateUtils;
 
 public class ProfileFragment extends Fragment {
 
     private FirebaseAuth auth;
     private DecisionRepository decisionRepository;
+    private UserProfileRepository userProfileRepository;
 
     private TextView tvUserEmail;
+    private TextView tvUserLevel;
+    private TextView tvXpProgress;
     private TextView tvTotalDecisions;
     private TextView tvEvaluatedDecisions;
     private TextView tvPendingDecisions;
+    private TextView tvActivityCompletionRate;
+    private TextView tvDisciplineStreak;
     private TextView tvMemberSince;
     private MaterialButton btnLogout;
 
@@ -44,11 +51,16 @@ public class ProfileFragment extends Fragment {
 
         auth = FirebaseAuth.getInstance();
         decisionRepository = com.sai.decisiongraveyard.repository.RepositoryProvider.getInstance(requireContext()).getDecisionRepository();
+        userProfileRepository = com.sai.decisiongraveyard.repository.RepositoryProvider.getInstance(requireContext()).getUserProfileRepository();
 
         tvUserEmail = view.findViewById(R.id.tvUserEmail);
+        tvUserLevel = view.findViewById(R.id.tvUserLevel);
+        tvXpProgress = view.findViewById(R.id.tvXpProgress);
         tvTotalDecisions = view.findViewById(R.id.tvTotalDecisions);
         tvEvaluatedDecisions = view.findViewById(R.id.tvEvaluatedDecisions);
         tvPendingDecisions = view.findViewById(R.id.tvPendingDecisions);
+        tvActivityCompletionRate = view.findViewById(R.id.tvActivityCompletionRate);
+        tvDisciplineStreak = view.findViewById(R.id.tvDisciplineStreak);
         tvMemberSince = view.findViewById(R.id.tvMemberSince);
         btnLogout = view.findViewById(R.id.btnLogout);
 
@@ -63,11 +75,38 @@ public class ProfileFragment extends Fragment {
         FirebaseUser currentUser = auth.getCurrentUser();
         if (currentUser != null) {
             tvUserEmail.setText(currentUser.getEmail());
+            tvMemberSince.setText(formatMemberSince(currentUser));
         }
         loadUserData();
     }
 
     private void loadUserData() {
+        userProfileRepository.getUserProfile(new UserProfileRepository.ProfileCallback() {
+            @Override
+            public void onSuccess(com.sai.decisiongraveyard.model.UserProfile profile) {
+                if (!isAdded()) {
+                    return;
+                }
+                requireActivity().runOnUiThread(() -> {
+                    tvUserLevel.setText("Level " + profile.getCurrentLevel() + " • " + profile.getLevelName());
+                    tvXpProgress.setText(profile.getCurrentXP() + " / " + profile.getXpToNextLevel() + " XP");
+                    tvActivityCompletionRate.setText(String.format(java.util.Locale.getDefault(), "%.0f%%", profile.getActivityCompletionRate()));
+                    tvDisciplineStreak.setText(String.valueOf(profile.getDailyDisciplineStreak()));
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                if (!isAdded()) {
+                    return;
+                }
+                requireActivity().runOnUiThread(() -> {
+                    tvUserLevel.setText(getString(R.string.profile_level_unknown));
+                    tvXpProgress.setText(getString(R.string.profile_xp_unavailable));
+                });
+            }
+        });
+
         new Thread(() -> {
             try {
                 var records = decisionRepository.getAllDecisionRecords();
@@ -91,7 +130,6 @@ public class ProfileFragment extends Fragment {
                     tvTotalDecisions.setText(String.valueOf(finalTotal));
                     tvEvaluatedDecisions.setText(String.valueOf(finalEvaluated));
                     tvPendingDecisions.setText(String.valueOf(finalPending));
-                    tvMemberSince.setText("Recently");
                 });
             } catch (Exception e) {
                 requireActivity().runOnUiThread(() -> {
@@ -120,5 +158,18 @@ public class ProfileFragment extends Fragment {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         requireActivity().finish();
+    }
+
+    private String formatMemberSince(FirebaseUser currentUser) {
+        if (currentUser == null || currentUser.getMetadata() == null) {
+            return getString(R.string.profile_member_unknown);
+        }
+
+        long createdAt = currentUser.getMetadata().getCreationTimestamp();
+        if (createdAt <= 0L) {
+            return getString(R.string.profile_member_unknown);
+        }
+
+        return DateUtils.formatDateTime(createdAt);
     }
 }
