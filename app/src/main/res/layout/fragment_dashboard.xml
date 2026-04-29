@@ -15,12 +15,11 @@
             android:padding="16dp">
 
             <!-- Level & XP Card -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                style="@style/Widget.DecisionGraveyard.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -63,9 +62,12 @@
                         android:textSize="14sp"
                         android:textColor="?attr/colorOnSurfaceVariant" />
 
-                    <ProgressBar
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/progressXP"
-                        style="?android:attr/progressBarStyleHorizontal"
+                        app:trackCornerRadius="4dp"
+                        app:indicatorColor="?attr/colorPrimary"
+                        app:trackColor="?attr/colorSurfaceVariant"
+                        app:trackThickness="8dp"
                         android:layout_width="match_parent"
                         android:layout_height="8dp"
                         android:layout_marginTop="8dp"
@@ -75,15 +77,14 @@
 
                 </LinearLayout>
 
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Streaks Card -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                style="@style/Widget.DecisionGraveyard.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -150,7 +151,7 @@
 
                 </LinearLayout>
 
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Metrics Grid -->
             <LinearLayout
@@ -159,13 +160,12 @@
                 android:orientation="horizontal"
                 android:layout_marginBottom="16dp">
 
-                <androidx.cardview.widget.CardView
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp">
+                style="@style/Widget.DecisionGraveyard.Card">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -193,15 +193,14 @@
 
                     </LinearLayout>
 
-                </androidx.cardview.widget.CardView>
+                </com.google.android.material.card.MaterialCardView>
 
-                <androidx.cardview.widget.CardView
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp">
+                style="@style/Widget.DecisionGraveyard.Card">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -229,17 +228,16 @@
 
                     </LinearLayout>
 
-                </androidx.cardview.widget.CardView>
+                </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
 
             <!-- Today's Status -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                style="@style/Widget.DecisionGraveyard.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -294,7 +292,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Activities"
+                                android:text="Done / Planned"
                                 android:textSize="12sp"
                                 android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -313,15 +311,14 @@
 
                 </LinearLayout>
 
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Behavioral Insights -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                style="@style/Widget.DecisionGraveyard.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -348,14 +345,13 @@
 
                 </LinearLayout>
 
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Weekly Trend Card -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                style="@style/Widget.DecisionGraveyard.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -469,7 +465,7 @@
 
                 </LinearLayout>
 
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
 

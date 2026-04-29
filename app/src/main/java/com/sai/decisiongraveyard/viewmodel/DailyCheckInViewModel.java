@@ -126,6 +126,36 @@ public class DailyCheckInViewModel extends AndroidViewModel {
         });
     }
 
+    public void submitCheckIn(boolean decisionsMade, boolean activitiesCompleted) {
+        DailyCheckIn checkIn = todayCheckIn.getValue();
+        if (checkIn == null || checkIn.getCheckInId() == null) {
+            errorMessage.setValue("No check-in found");
+            return;
+        }
+
+        isLoading.setValue(true);
+        errorMessage.setValue(null);
+        actionSuccess.setValue(false);
+
+        repository.submitCheckIn(checkIn.getCheckInId(), decisionsMade, activitiesCompleted, new DailyCheckInRepository.ActionCallback() {
+            @Override
+            public void onSuccess() {
+                isLoading.setValue(false);
+                checkIn.setDecisionsMade(decisionsMade);
+                checkIn.setActivitiesCompleted(activitiesCompleted);
+                checkIn.setSubmitted(true);
+                todayCheckIn.setValue(checkIn);
+                actionSuccess.setValue(true);
+            }
+
+            @Override
+            public void onError(String error) {
+                isLoading.setValue(false);
+                errorMessage.setValue(error);
+            }
+        });
+    }
+
     public void clearActionSuccess() {
         actionSuccess.setValue(false);
     }

@@ -61,6 +61,8 @@ public class DashboardFragment extends Fragment {
         RepositoryProvider provider = RepositoryProvider.getInstance(requireContext());
         provider.getDecisionRepository().getDataChangedTrigger().observe(getViewLifecycleOwner(), trigger -> viewModel.loadDashboardData());
         provider.getActivityRepository().getDataChangedTrigger().observe(getViewLifecycleOwner(), trigger -> viewModel.loadDashboardData());
+        provider.getUserProfileRepository().getDataChangedTrigger().observe(getViewLifecycleOwner(), trigger -> viewModel.loadDashboardData());
+        provider.getDailyCheckInRepository().getDataChangedTrigger().observe(getViewLifecycleOwner(), trigger -> viewModel.loadDashboardData());
     }
 
     private void bindViews(View view) {
@@ -95,7 +97,7 @@ public class DashboardFragment extends Fragment {
             tvCompletionRate.setText(String.format("%.0f%%", rate));
         });
         viewModel.getTodayActivitiesCount().observe(getViewLifecycleOwner(), count -> {
-            tvTodayActivities.setText(String.valueOf(count));
+            tvTodayActivities.setText(count);
         });
         viewModel.getTodayDecisionsCount().observe(getViewLifecycleOwner(), count -> {
             tvTodayDecisions.setText(String.valueOf(count));

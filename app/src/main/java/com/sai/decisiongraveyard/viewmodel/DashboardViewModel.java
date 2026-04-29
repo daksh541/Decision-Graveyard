@@ -23,7 +23,7 @@ public class DashboardViewModel extends AndroidViewModel {
     private MutableLiveData<UserProfile> userProfile = new MutableLiveData<>();
     private MutableLiveData<Integer> decisionScore = new MutableLiveData<>(0);
     private MutableLiveData<Double> activityCompletionRate = new MutableLiveData<>(0.0);
-    private MutableLiveData<Integer> todayActivitiesCount = new MutableLiveData<>(0);
+    private MutableLiveData<String> todayActivitiesCount = new MutableLiveData<>("0/0");
     private MutableLiveData<Integer> todayDecisionsCount = new MutableLiveData<>(0);
     private MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
     private MutableLiveData<String> errorMessage = new MutableLiveData<>();
@@ -49,7 +49,7 @@ public class DashboardViewModel extends AndroidViewModel {
         return activityCompletionRate;
     }
 
-    public LiveData<Integer> getTodayActivitiesCount() {
+    public LiveData<String> getTodayActivitiesCount() {
         return todayActivitiesCount;
     }
 
@@ -92,11 +92,17 @@ public class DashboardViewModel extends AndroidViewModel {
 
         new Thread(() -> {
             int todayActivityCount = 0;
+            int todayCompletedCount = 0;
             int todayDecisionCount = 0;
 
             try {
                 List<com.sai.decisiongraveyard.model.Activity> activities = activityRepository.getActivitiesForDay(todayStart, todayEnd);
                 todayActivityCount = activities.size();
+                for (com.sai.decisiongraveyard.model.Activity activity : activities) {
+                    if (activity.isCompleted()) {
+                        todayCompletedCount++;
+                    }
+                }
             } catch (Exception e) {
                 errorMessage.postValue("Error loading activities: " + e.getMessage());
             }
@@ -112,7 +118,7 @@ public class DashboardViewModel extends AndroidViewModel {
             } catch (Exception e) {
                 errorMessage.postValue("Error loading decisions: " + e.getMessage());
             } finally {
-                todayActivitiesCount.postValue(todayActivityCount);
+                todayActivitiesCount.postValue(todayCompletedCount + "/" + todayActivityCount);
                 todayDecisionsCount.postValue(todayDecisionCount);
                 isLoading.postValue(false);
             }

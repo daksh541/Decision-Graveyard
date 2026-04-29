@@ -9,6 +9,7 @@ public class DailyCheckIn {
     private long date;
     private boolean decisionsMade;
     private boolean activitiesCompleted;
+    private boolean submitted;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
@@ -20,6 +21,7 @@ public class DailyCheckIn {
         this.date = date;
         this.decisionsMade = false;
         this.activitiesCompleted = false;
+        this.submitted = false;
         this.createdAt = new Timestamp(System.currentTimeMillis() / 1000, 0);
         this.updatedAt = this.createdAt;
     }
@@ -64,6 +66,14 @@ public class DailyCheckIn {
         this.activitiesCompleted = activitiesCompleted;
     }
 
+    public boolean isSubmitted() {
+        return submitted;
+    }
+
+    public void setSubmitted(boolean submitted) {
+        this.submitted = submitted;
+    }
+
     public Timestamp getCreatedAt() {
         return createdAt;
     }
@@ -91,6 +101,7 @@ public class DailyCheckIn {
                 ", userId='" + userId + '\'' +
                 ", date=" + date +
                 ", decisionsMade=" + decisionsMade +
+                ", submitted=" + submitted +
                 ", activitiesCompleted=" + activitiesCompleted +
                 '}';
     }

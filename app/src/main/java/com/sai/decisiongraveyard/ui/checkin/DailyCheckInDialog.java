@@ -90,6 +90,15 @@ public class DailyCheckInDialog extends DialogFragment {
             btnSubmit.setEnabled(!isLoading);
             btnSkip.setEnabled(!isLoading);
         });
+        viewModel.getActionSuccess().observe(getViewLifecycleOwner(), success -> {
+            if (Boolean.TRUE.equals(success)) {
+                viewModel.clearActionSuccess();
+                dismiss();
+                if (listener != null) {
+                    listener.onCheckInComplete();
+                }
+            }
+        });
         viewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
             if (error != null) {
                 Toast.makeText(getContext(), error, Toast.LENGTH_SHORT).show();
@@ -101,38 +110,22 @@ public class DailyCheckInDialog extends DialogFragment {
     private void updateUI(DailyCheckIn checkIn) {
         if (checkIn == null) return;
 
-        if (checkIn.isDecisionsMade()) {
-            toggleDecision.check(R.id.btnDecisionYes);
-            decisionMade = true;
+        if (checkIn.isSubmitted()) {
+            toggleDecision.check(checkIn.isDecisionsMade() ? R.id.btnDecisionYes : R.id.btnDecisionNo);
+            toggleActivity.check(checkIn.isActivitiesCompleted() ? R.id.btnActivityYes : R.id.btnActivityNo);
         }
 
-        if (checkIn.isActivitiesCompleted()) {
-            toggleActivity.check(R.id.btnActivityYes);
-            activityCompleted = true;
-        }
+        decisionMade = checkIn.isDecisionsMade();
+        activityCompleted = checkIn.isActivitiesCompleted();
     }
 
     private void submitCheckIn() {
-        DailyCheckIn checkIn = viewModel.getTodayCheckIn().getValue();
-        if (checkIn == null) return;
-
-        if (decisionMade != checkIn.isDecisionsMade()) {
-            viewModel.markDecisionsMade();
+        if (toggleDecision.getCheckedButtonId() == View.NO_ID || toggleActivity.getCheckedButtonId() == View.NO_ID) {
+            Toast.makeText(getContext(), "Please answer both questions.", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        if (activityCompleted != checkIn.isActivitiesCompleted()) {
-            viewModel.markActivitiesCompleted();
-        }
-
-        viewModel.getActionSuccess().observe(getViewLifecycleOwner(), success -> {
-            if (success) {
-                viewModel.clearActionSuccess();
-                dismiss();
-                if (listener != null) {
-                    listener.onCheckInComplete();
-                }
-            }
-        });
+        viewModel.submitCheckIn(decisionMade, activityCompleted);
     }
 
     private void skipCheckIn() {

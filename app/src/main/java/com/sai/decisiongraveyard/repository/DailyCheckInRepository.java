@@ -3,6 +3,9 @@ package com.sai.decisiongraveyard.repository;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
@@ -27,6 +30,7 @@ public class DailyCheckInRepository {
     private FirebaseFirestore db;
     private FirebaseAuth auth;
     private UserProfileRepository userProfileRepository;
+    private final MutableLiveData<Long> dataChangedTrigger = new MutableLiveData<>();
 
     public DailyCheckInRepository(Context context) {
         db = FirebaseFirestore.getInstance();
@@ -50,6 +54,10 @@ public class DailyCheckInRepository {
     public interface ActionCallback {
         void onSuccess();
         void onError(String error);
+    }
+
+    public LiveData<Long> getDataChangedTrigger() {
+        return dataChangedTrigger;
     }
 
     public String requireUserId() {
@@ -140,31 +148,74 @@ public class DailyCheckInRepository {
             return;
         }
 
-        db.collection(COLLECTION_NAME)
-                .document(checkIn.getCheckInId())
-                .set(checkIn)
-                .addOnSuccessListener(aVoid -> {
-                    // Award XP and update streaks if check-in is complete
-                    if (checkIn.isComplete() && userProfileRepository != null) {
-                        userProfileRepository.incrementDailyDisciplineStreak(new UserProfileRepository.ActionCallback() {
-                            @Override
-                            public void onSuccess() {
+        getCheckInById(checkIn.getCheckInId(), new CheckInCallback() {
+            @Override
+            public void onSuccess(DailyCheckIn existingCheckIn) {
+                boolean wasComplete = existingCheckIn != null && existingCheckIn.isComplete();
+
+                if (checkIn.getCreatedAt() == null) {
+                    checkIn.setCreatedAt(existingCheckIn != null && existingCheckIn.getCreatedAt() != null
+                            ? existingCheckIn.getCreatedAt()
+                            : new com.google.firebase.Timestamp(System.currentTimeMillis() / 1000, 0));
+                }
+                checkIn.setUpdatedAt(new com.google.firebase.Timestamp(System.currentTimeMillis() / 1000, 0));
+
+                db.collection(COLLECTION_NAME)
+                        .document(checkIn.getCheckInId())
+                        .set(checkIn)
+                        .addOnSuccessListener(aVoid -> {
+                            dataChangedTrigger.postValue(System.currentTimeMillis());
+
+                            boolean shouldRewardCompletion = !wasComplete && checkIn.isComplete() && userProfileRepository != null;
+                            if (shouldRewardCompletion) {
+                                userProfileRepository.incrementDailyDisciplineStreak(new UserProfileRepository.ActionCallback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        callback.onSuccess();
+                                    }
+
+                                    @Override
+                                    public void onError(String error) {
+                                        callback.onSuccess();
+                                    }
+                                });
+                            } else {
                                 callback.onSuccess();
                             }
-
-                            @Override
-                            public void onError(String error) {
-                                callback.onSuccess(); // Still succeed even if XP fails
-                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e(TAG, "Error updating check-in", e);
+                            callback.onError(e.getMessage());
                         });
-                    } else {
-                        callback.onSuccess();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error updating check-in", e);
-                    callback.onError(e.getMessage());
-                });
+            }
+
+            @Override
+            public void onError(String error) {
+                callback.onError(error);
+            }
+        });
+    }
+
+    public void submitCheckIn(String checkInId, boolean decisionsMade, boolean activitiesCompleted, ActionCallback callback) {
+        getCheckInById(checkInId, new CheckInCallback() {
+            @Override
+            public void onSuccess(DailyCheckIn checkIn) {
+                if (checkIn == null) {
+                    callback.onError("Check-in not found");
+                    return;
+                }
+
+                checkIn.setDecisionsMade(decisionsMade);
+                checkIn.setActivitiesCompleted(activitiesCompleted);
+                checkIn.setSubmitted(true);
+                updateCheckIn(checkIn, callback);
+            }
+
+            @Override
+            public void onError(String error) {
+                callback.onError(error);
+            }
+        });
     }
 
     public void markDecisionsMade(String checkInId, ActionCallback callback) {

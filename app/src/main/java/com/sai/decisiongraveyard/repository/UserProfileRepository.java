@@ -3,6 +3,9 @@ package com.sai.decisiongraveyard.repository;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
@@ -23,6 +26,7 @@ public class UserProfileRepository {
     private FirebaseFirestore db;
     private FirebaseAuth auth;
     private Context context;
+    private final MutableLiveData<Long> dataChangedTrigger = new MutableLiveData<>();
 
     public UserProfileRepository(Context context) {
         this.context = context.getApplicationContext();
@@ -49,6 +53,10 @@ public class UserProfileRepository {
 
     private DocumentReference profileDocument(String userId) {
         return db.collection(COLLECTION_NAME).document(userId);
+    }
+
+    public LiveData<Long> getDataChangedTrigger() {
+        return dataChangedTrigger;
     }
 
     public void getUserProfile(ProfileCallback callback) {
@@ -83,7 +91,10 @@ public class UserProfileRepository {
 
         profileDocument(userId)
                 .set(profile)
-                .addOnSuccessListener(aVoid -> callback.onSuccess())
+                .addOnSuccessListener(aVoid -> {
+                    dataChangedTrigger.postValue(System.currentTimeMillis());
+                    callback.onSuccess();
+                })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error updating user profile", e);
                     callback.onError(e.getMessage());

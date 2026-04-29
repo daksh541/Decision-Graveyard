@@ -106,6 +106,17 @@ public class ActivityRepository {
         try {
             Log.d(TAG, "markAsCompleted called for activityId: " + activityId);
             
+            // First, get the activity to determine its scheduled day
+            Activity activity = getActivity(activityId);
+            if (activity == null) {
+                callback.onError("Activity not found");
+                return;
+            }
+            
+            long scheduledTime = activity.getScheduledTime();
+            long dayStart = getDayStart(scheduledTime);
+            long dayEnd = getDayEnd(scheduledTime);
+            
             Map<String, Object> updates = new java.util.LinkedHashMap<>();
             updates.put("completed", true);
             updates.put("completedTime", System.currentTimeMillis());
@@ -123,16 +134,18 @@ public class ActivityRepository {
                             userProfileRepository.addCompletedActivity(new UserProfileRepository.ActionCallback() {
                                 @Override
                                 public void onSuccess() {
-                                    callback.onSuccess();
+                                    // Check if all activities for this day are now completed
+                                    checkAndIncrementStreak(dayStart, dayEnd, callback);
                                 }
 
                                 @Override
                                 public void onError(String error) {
-                                    callback.onSuccess(); // Still succeed even if XP fails
+                                    // Still check streak even if XP fails
+                                    checkAndIncrementStreak(dayStart, dayEnd, callback);
                                 }
                             });
                         } else {
-                            callback.onSuccess();
+                            checkAndIncrementStreak(dayStart, dayEnd, callback);
                         }
                     })
                     .addOnFailureListener(e -> {
@@ -143,6 +156,63 @@ public class ActivityRepository {
             Log.e(TAG, "Exception in markAsCompleted: " + e.getMessage(), e);
             callback.onError(e.getMessage() != null ? e.getMessage() : "Failed to update activity");
         }
+    }
+    
+    private void checkAndIncrementStreak(long dayStart, long dayEnd, ActionCallback callback) {
+        new Thread(() -> {
+            try {
+                List<Activity> dayActivities = getActivitiesForDay(dayStart, dayEnd);
+                boolean allCompleted = true;
+                
+                for (Activity act : dayActivities) {
+                    if (!act.isCompleted()) {
+                        allCompleted = false;
+                        break;
+                    }
+                }
+                
+                if (allCompleted && !dayActivities.isEmpty()) {
+                    // All activities for the day are completed, increment streak
+                    userProfileRepository.incrementDailyDisciplineStreak(new UserProfileRepository.ActionCallback() {
+                        @Override
+                        public void onSuccess() {
+                            callback.onSuccess();
+                        }
+
+                        @Override
+                        public void onError(String error) {
+                            Log.e(TAG, "Failed to increment streak: " + error);
+                            callback.onSuccess(); // Still succeed even if streak update fails
+                        }
+                    });
+                } else {
+                    callback.onSuccess();
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error checking streak: " + e.getMessage(), e);
+                callback.onSuccess(); // Still succeed even if check fails
+            }
+        }).start();
+    }
+    
+    private long getDayStart(long timestamp) {
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        calendar.setTimeInMillis(timestamp);
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        calendar.set(java.util.Calendar.MINUTE, 0);
+        calendar.set(java.util.Calendar.SECOND, 0);
+        calendar.set(java.util.Calendar.MILLISECOND, 0);
+        return calendar.getTimeInMillis();
+    }
+    
+    private long getDayEnd(long timestamp) {
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        calendar.setTimeInMillis(timestamp);
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 23);
+        calendar.set(java.util.Calendar.MINUTE, 59);
+        calendar.set(java.util.Calendar.SECOND, 59);
+        calendar.set(java.util.Calendar.MILLISECOND, 999);
+        return calendar.getTimeInMillis();
     }
 
     public void deleteActivity(long activityId, ActionCallback callback) {
