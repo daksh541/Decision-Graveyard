@@ -1,69 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Color Psychology: Green=Good, Red=Bad, Yellow=Neutral, Blue=Pending -->
+    <color name="seed">#3B82F6</color>
+    <color name="primary">#3B82F6</color>
+    <color name="primary_variant">#0F172A</color>
+    <color name="secondary">#60A5FA</color>
 
-    <!-- Core Brand Colors -->
-    <color name="seed">#1B4965</color>
-    <color name="primary">#87BBD8</color>
-    <color name="primary_variant">#0E151D</color>
-    <color name="secondary">#F4A261</color>
+    <color name="success">#22C55E</color>
+    <color name="success_dark">#16A34A</color>
+    <color name="success_container">#0F2E1B</color>
+    <color name="danger">#EF4444</color>
+    <color name="danger_dark">#DC2626</color>
+    <color name="danger_container">#351517</color>
+    <color name="warning">#F59E0B</color>
+    <color name="warning_dark">#D97706</color>
+    <color name="warning_container">#3A290E</color>
+    <color name="pending">#3B82F6</color>
+    <color name="pending_dark">#2563EB</color>
+    <color name="pending_container">#12284F</color>
 
-    <!-- Decision Outcome Colors (Color Psychology) -->
-    <color name="success">#4ADE80</color>
-    <color name="success_dark">#22C55E</color>
-    <color name="success_container">#14532D</color>
-    <color name="danger">#F87171</color>
-    <color name="danger_dark">#EF4444</color>
-    <color name="danger_container">#7F1D1D</color>
-    <color name="warning">#FACC15</color>
-    <color name="warning_dark">#EAB308</color>
-    <color name="warning_container">#713F12</color>
-    <color name="pending">#60A5FA</color>
-    <color name="pending_dark">#3B82F6</color>
-    <color name="pending_container">#1E3A8A</color>
+    <color name="accent">#3B82F6</color>
+    <color name="accent_container">#12284F</color>
 
-    <!-- Accent -->
-    <color name="accent">#F4A261</color>
-    <color name="accent_container">#7C3A0F</color>
+    <color name="surface">#0F172A</color>
+    <color name="surface_variant">#162033</color>
+    <color name="surface_card">#1E293B</color>
+    <color name="surface_card_glass">#CC1E293B</color>
+    <color name="border_glass">#0DFFFFFF</color>
+    <color name="bottom_nav_glass">#B31E293B</color>
+    <color name="surface_elevated">#273449</color>
 
-    <!-- Surface Colors (Dark Mode Default) -->
-    <color name="surface">#0A0F14</color>
-    <color name="surface_variant">#111827</color>
-    <color name="surface_card">#16212B</color>
-    <color name="surface_elevated">#1E293B</color>
-
-    <!-- Text Colors -->
-    <color name="text_primary">#E4EEF7</color>
+    <color name="text_primary">#FFFFFF</color>
     <color name="text_secondary">#94A3B8</color>
     <color name="text_tertiary">#64748B</color>
     <color name="text_disabled">#475569</color>
 
-    <!-- Utility Colors -->
-    <color name="divider">#374151</color>
-    <color name="ripple">#33FFFFFF</color>
+    <color name="divider">#334155</color>
+    <color name="ripple">#26FFFFFF</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#FF000000</color>
     <color name="grey">#64748B</color>
     <color name="transparent">#00000000</color>
 
-    <!-- Risk/Warning Colors -->
-    <color name="risk_background">#2D1B1B</color>
-    <color name="risk_pulse">#F87171</color>
+    <color name="risk_background">#1B1014</color>
+    <color name="risk_pulse">#EF4444</color>
 
-    <!-- Chip Colors -->
-    <color name="chip_selected_text">#0A0F14</color>
-    <color name="chip_unselected_text">#E4EEF7</color>
-    <color name="chip_background">#1E293B</color>
+    <color name="chip_selected_text">#FFFFFF</color>
+    <color name="chip_unselected_text">#CBD5E1</color>
+    <color name="chip_background">#162033</color>
 
-    <!-- Category Colors -->
-    <color name="category_money">#10B981</color>
-    <color name="category_health">#EF4444</color>
-    <color name="category_study">#8B5CF6</color>
-    <color name="category_personal">#F59E0B</color>
+    <color name="category_money">#F59E0B</color>
+    <color name="category_health">#22C55E</color>
+    <color name="category_study">#38BDF8</color>
+    <color name="category_personal">#A78BFA</color>
     <color name="category_work">#3B82F6</color>
     <color name="category_relationship">#EC4899</color>
 
-    <!-- Streak Colors -->
-    <color name="streak_fire">#F97316</color>
-    <color name="streak_gold">#FACC15</color>
+    <color name="streak_fire">#FB7185</color>
+    <color name="streak_gold">#FBBF24</color>
 </resources>

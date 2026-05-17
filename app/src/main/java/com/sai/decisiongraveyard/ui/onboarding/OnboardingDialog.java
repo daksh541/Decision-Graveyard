@@ -4,13 +4,15 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.ViewGroup;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.SeekBar;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 
 import com.sai.decisiongraveyard.R;
 
@@ -25,6 +27,17 @@ public class OnboardingDialog extends Dialog {
     private TextView tvOnboardingDescription;
     private Button btnNext;
     private Button btnSkip;
+    private Button btnBack;
+    private View indicator1;
+    private View indicator2;
+    private LinearLayout layoutGoalsStep;
+    private LinearLayout layoutBaselineStep;
+    private SeekBar seekImpulseControl;
+    private SeekBar seekDeepFocus;
+    private SeekBar seekConsistency;
+    private TextView tvImpulseValue;
+    private TextView tvFocusValue;
+    private TextView tvConsistencyValue;
 
     private final OnboardingCompleteListener listener;
 
@@ -43,9 +56,13 @@ public class OnboardingDialog extends Dialog {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dialog_onboarding);
         setCancelable(false);
+        if (getWindow() != null) {
+            getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        }
 
         bindViews();
         setupClickListeners();
+        setupSeekBars();
         updateStep();
     }
 
@@ -55,11 +72,22 @@ public class OnboardingDialog extends Dialog {
         tvOnboardingDescription = findViewById(R.id.tvOnboardingDescription);
         btnNext = findViewById(R.id.btnNext);
         btnSkip = findViewById(R.id.btnSkip);
+        btnBack = findViewById(R.id.btnBack);
+        indicator1 = findViewById(R.id.indicator1);
+        indicator2 = findViewById(R.id.indicator2);
+        layoutGoalsStep = findViewById(R.id.layoutGoalsStep);
+        layoutBaselineStep = findViewById(R.id.layoutBaselineStep);
+        seekImpulseControl = findViewById(R.id.seekImpulseControl);
+        seekDeepFocus = findViewById(R.id.seekDeepFocus);
+        seekConsistency = findViewById(R.id.seekConsistency);
+        tvImpulseValue = findViewById(R.id.tvImpulseValue);
+        tvFocusValue = findViewById(R.id.tvFocusValue);
+        tvConsistencyValue = findViewById(R.id.tvConsistencyValue);
     }
 
     private void setupClickListeners() {
         btnNext.setOnClickListener(v -> {
-            if (currentStep < 3) {
+            if (currentStep < 1) {
                 currentStep++;
                 updateStep();
             } else {
@@ -68,35 +96,84 @@ public class OnboardingDialog extends Dialog {
         });
 
         btnSkip.setOnClickListener(v -> skipOnboarding());
+        btnBack.setOnClickListener(v -> {
+            if (currentStep > 0) {
+                currentStep--;
+                updateStep();
+            }
+        });
+    }
+
+    private void setupSeekBars() {
+        seekImpulseControl.setOnSeekBarChangeListener(simpleListener(value ->
+                updateValuePill(tvImpulseValue, value, "Struggling", "Average", "Disciplined")));
+        seekDeepFocus.setOnSeekBarChangeListener(simpleListener(value ->
+                updateValuePill(tvFocusValue, value, "Distracted", "Average", "Locked In")));
+        seekConsistency.setOnSeekBarChangeListener(simpleListener(value ->
+                updateValuePill(tvConsistencyValue, value, "Needs Work", "Building", "Relentless")));
+
+        updateValuePill(tvImpulseValue, seekImpulseControl.getProgress(), "Struggling", "Average", "Disciplined");
+        updateValuePill(tvFocusValue, seekDeepFocus.getProgress(), "Distracted", "Average", "Locked In");
+        updateValuePill(tvConsistencyValue, seekConsistency.getProgress(), "Needs Work", "Building", "Relentless");
     }
 
     private void updateStep() {
+        updateIndicators();
+        btnBack.setVisibility(currentStep == 0 ? View.INVISIBLE : View.VISIBLE);
+        btnSkip.setVisibility(currentStep == 1 ? View.GONE : View.VISIBLE);
+        layoutGoalsStep.setVisibility(currentStep == 0 ? View.VISIBLE : View.GONE);
+        layoutBaselineStep.setVisibility(currentStep == 1 ? View.VISIBLE : View.GONE);
+
         switch (currentStep) {
             case 0:
-                ivOnboardingImage.setImageResource(R.drawable.ic_add);
-                tvOnboardingTitle.setText("Welcome to Decision Graveyard");
-                tvOnboardingDescription.setText("Track your decisions and evaluate them later to understand your decision-making patterns.");
-                btnNext.setText("Next");
+                ivOnboardingImage.setImageResource(R.drawable.ic_decisions);
+                tvOnboardingTitle.setText("Calibrate Your Discipline Score");
+                tvOnboardingDescription.setText("To accurately track your decisions, we need to understand your baseline. Select what matters most and where you usually lose control.");
+                btnNext.setText("Next Step");
                 break;
             case 1:
-                ivOnboardingImage.setImageResource(R.drawable.ic_lock);
-                tvOnboardingTitle.setText("Bury Your Decisions");
-                tvOnboardingDescription.setText("Log a decision and set a review date. The decision will be locked until that date to prevent bias.");
-                btnNext.setText("Next");
-                break;
-            case 2:
                 ivOnboardingImage.setImageResource(R.drawable.ic_insights);
-                tvOnboardingTitle.setText("Evaluate & Learn");
-                tvOnboardingDescription.setText("When the review date arrives, evaluate if your decision was good, bad, or neutral. Learn from your patterns.");
-                btnNext.setText("Next");
+                tvOnboardingTitle.setText("Establish Your Baseline");
+                tvOnboardingDescription.setText("Be honest with yourself. This helps the system calibrate interventions and feedback to your actual behavior patterns.");
+                btnNext.setText("Finish Calibration");
                 break;
-            case 3:
-                ivOnboardingImage.setImageResource(R.drawable.ic_home);
-                tvOnboardingTitle.setText("Quick Actions");
-                tvOnboardingDescription.setText("Use the Quick Add button for fast entry. Swipe decisions right for 'Good' or left for 'Bad' to evaluate quickly.");
-                btnNext.setText("Get Started");
-                btnSkip.setVisibility(View.GONE);
-                break;
+        }
+    }
+
+    private void updateIndicators() {
+        View[] indicators = {indicator1, indicator2};
+        for (int i = 0; i < indicators.length; i++) {
+            indicators[i].setBackgroundResource(i <= currentStep ? R.drawable.bg_badge_primary : R.drawable.bg_badge_surface);
+        }
+    }
+
+    private SeekBar.OnSeekBarChangeListener simpleListener(ValueConsumer consumer) {
+        return new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                consumer.accept(progress);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        };
+    }
+
+    private void updateValuePill(TextView textView, int value, String low, String medium, String high) {
+        if (value < 35) {
+            textView.setText(low);
+            textView.setBackgroundResource(R.drawable.bg_badge_warning);
+        } else if (value < 70) {
+            textView.setText(medium);
+            textView.setBackgroundResource(R.drawable.bg_badge_surface);
+        } else {
+            textView.setText(high);
+            textView.setBackgroundResource(R.drawable.bg_badge_primary);
         }
     }
 
@@ -124,5 +201,9 @@ public class OnboardingDialog extends Dialog {
     public static boolean hasCompletedOnboarding(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         return prefs.getBoolean(KEY_ONBOARDING_COMPLETED, false);
+    }
+
+    private interface ValueConsumer {
+        void accept(int value);
     }
 }

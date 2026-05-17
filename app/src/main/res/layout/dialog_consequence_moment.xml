@@ -3,23 +3,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/surface"
-    android:clickable="true"
-    android:focusable="true">
+    android:background="#F20F172A">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
+        android:layout_margin="24dp"
+        android:background="@drawable/bg_surface_card"
+        android:gravity="center"
         android:orientation="vertical"
-        android:padding="32dp"
-        android:gravity="center">
+        android:padding="28dp">
 
-        <!-- Lock Icon with Animation -->
         <FrameLayout
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:background="@drawable/bg_consequence_circle"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:background="@drawable/bg_badge_primary"
             android:padding="24dp">
 
             <ImageView
@@ -27,60 +26,45 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:src="@drawable/ic_lock"
-                android:tint="@color/white" />
+                android:tint="@color/text_primary" />
         </FrameLayout>
 
-        <!-- Warning Text -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:gravity="center"
-            android:text="You are about to seal this decision"
+            android:layout_marginTop="24dp"
+            android:text="Seal This Decision"
             android:textColor="@color/text_primary"
-            android:textSize="24sp"
-            android:fontFamily="@font/inter_bold" />
+            android:textSize="26sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvLockDuration"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:gravity="center"
+            android:layout_marginTop="8dp"
             android:text="Locked for 3 days"
             android:textColor="@color/primary"
-            android:textSize="18sp"
-            android:fontFamily="@font/inter_semibold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:gravity="center"
-            android:text="Future You will judge this.\nThere's no going back."
-            android:textColor="@color/text_secondary"
-            android:textSize="16sp"
-            android:lineSpacingMultiplier="1.3" />
+            android:textSize="15sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvFutureMessage"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
             android:gravity="center"
-            android:text="In 3 days, you will come back and judge this decision.\n\nWill your future self be proud or disappointed?"
-            android:textColor="@color/accent"
-            android:textSize="15sp"
-            android:textStyle="italic"
-            android:lineSpacingMultiplier="1.4" />
+            android:text="Future You will judge this later."
+            android:textColor="@color/text_secondary"
+            android:textSize="15sp" />
 
-        <!-- Decision Preview Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            app:cardBackgroundColor="@color/surface_card"
-            app:cardCornerRadius="16dp"
+            android:layout_marginTop="20dp"
+            app:cardBackgroundColor="@color/surface_variant"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
             app:strokeColor="@color/divider"
             app:strokeWidth="1dp">
 
@@ -88,7 +72,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="18dp">
 
                 <TextView
                     android:id="@+id/tvPreviewTitle"
@@ -96,9 +80,7 @@
                     android:layout_height="wrap_content"
                     android:textColor="@color/text_primary"
                     android:textSize="16sp"
-                    android:fontFamily="@font/inter_semibold"
-                    android:maxLines="2"
-                    android:ellipsize="end" />
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvPreviewCategory"
@@ -106,31 +88,24 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
+                    android:textSize="13sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Buttons -->
-        <com.google.android.material.button.MaterialButton
+        <Button
             android:id="@+id/btnConfirmSeal"
             style="@style/Widget.DecisionGraveyard.Button.Filled"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:paddingVertical="16dp"
-            android:text="SEAL THIS DECISION"
-            android:textSize="16sp"
-            app:icon="@drawable/ic_lock"
-            app:iconGravity="textStart" />
+            android:layout_marginTop="24dp"
+            android:text="Seal Decision" />
 
-        <com.google.android.material.button.MaterialButton
+        <Button
             android:id="@+id/btnCancelSeal"
-            style="@style/Widget.Material3.Button.TextButton"
+            style="@style/Widget.DecisionGraveyard.Button.Secondary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Cancel - I need to think"
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp" />
+            android:layout_marginTop="10dp"
+            android:text="Not Yet" />
     </LinearLayout>
 </FrameLayout>

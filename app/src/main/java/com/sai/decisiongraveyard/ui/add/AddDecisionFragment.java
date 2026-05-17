@@ -406,13 +406,17 @@ public class AddDecisionFragment extends Fragment {
             @Override
             public void run() {
                 countdown[0]--;
-                tvCountdown.setText(String.valueOf(countdown[0]));
                 if (countdown[0] > 0) {
+                    tvCountdown.setText(String.valueOf(countdown[0]));
+                    tvCountdown.animate().scaleX(1.08f).scaleY(1.08f).setDuration(120)
+                            .withEndAction(() -> tvCountdown.animate().scaleX(1f).scaleY(1f).setDuration(120).start())
+                            .start();
                     handler.postDelayed(this, 1000);
                 } else {
                     btnConfirm.setEnabled(true);
                     btnConfirm.setText("Confirm Decision");
-                    tvCountdown.setText("PAUSE COMPLETE");
+                    tvCountdown.setText("0");
+                    tvCountdown.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_tertiary));
                 }
             }
         };

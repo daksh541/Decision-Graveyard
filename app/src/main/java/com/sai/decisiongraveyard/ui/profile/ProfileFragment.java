@@ -2,29 +2,42 @@ package com.sai.decisiongraveyard.ui.profile;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.sai.decisiongraveyard.R;
 import com.sai.decisiongraveyard.repository.DecisionRepository;
+import com.sai.decisiongraveyard.repository.RepositoryProvider;
+import com.sai.decisiongraveyard.repository.UserPreferencesRepository;
 import com.sai.decisiongraveyard.repository.UserProfileRepository;
 import com.sai.decisiongraveyard.ui.auth.LoginActivity;
 import com.sai.decisiongraveyard.util.DateUtils;
+import com.sai.decisiongraveyard.util.ThemeManager;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public class ProfileFragment extends Fragment {
+
+    private static final int[] REMINDER_OPTIONS = {5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60};
 
     private FirebaseAuth auth;
     private DecisionRepository decisionRepository;
     private UserProfileRepository userProfileRepository;
+    private UserPreferencesRepository userPreferencesRepository;
 
     private TextView tvUserEmail;
     private TextView tvUserLevel;
@@ -35,7 +48,21 @@ public class ProfileFragment extends Fragment {
     private TextView tvActivityCompletionRate;
     private TextView tvDisciplineStreak;
     private TextView tvMemberSince;
+    private TextView tvNotificationIntensity;
+    private TextView tvReminderValue;
+    private SwitchMaterial switchDarkTheme;
+    private SwitchMaterial switchBrutalMode;
+    private SwitchMaterial switchDailySummary;
+    private SwitchMaterial switchWeeklyReport;
+    private SeekBar seekReminderMinutes;
+    private Chip chipGoalFitness;
+    private Chip chipGoalStudy;
+    private Chip chipGoalProductivity;
+    private Chip chipGoalFinance;
+    private MaterialButton btnSavePreferences;
     private MaterialButton btnLogout;
+
+    private boolean bindingThemeSwitch;
 
     public ProfileFragment() {
         super(R.layout.fragment_profile);
@@ -46,13 +73,34 @@ public class ProfileFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull android.view.View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         auth = FirebaseAuth.getInstance();
-        decisionRepository = com.sai.decisiongraveyard.repository.RepositoryProvider.getInstance(requireContext()).getDecisionRepository();
-        userProfileRepository = com.sai.decisiongraveyard.repository.RepositoryProvider.getInstance(requireContext()).getUserProfileRepository();
+        RepositoryProvider provider = RepositoryProvider.getInstance(requireContext());
+        decisionRepository = provider.getDecisionRepository();
+        userProfileRepository = provider.getUserProfileRepository();
+        userPreferencesRepository = provider.getUserPreferencesRepository();
 
+        bindViews(view);
+        setupListeners();
+        loadUserData();
+        loadPreferences();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        FirebaseUser currentUser = auth.getCurrentUser();
+        if (currentUser != null) {
+            tvUserEmail.setText(currentUser.getEmail());
+            tvMemberSince.setText(getString(R.string.profile_member_since_label) + " • " + formatMemberSince(currentUser));
+        }
+        syncThemeSwitch();
+        loadUserData();
+    }
+
+    private void bindViews(android.view.View view) {
         tvUserEmail = view.findViewById(R.id.tvUserEmail);
         tvUserLevel = view.findViewById(R.id.tvUserLevel);
         tvXpProgress = view.findViewById(R.id.tvXpProgress);
@@ -62,22 +110,63 @@ public class ProfileFragment extends Fragment {
         tvActivityCompletionRate = view.findViewById(R.id.tvActivityCompletionRate);
         tvDisciplineStreak = view.findViewById(R.id.tvDisciplineStreak);
         tvMemberSince = view.findViewById(R.id.tvMemberSince);
+        tvNotificationIntensity = view.findViewById(R.id.tvNotificationIntensity);
+        tvReminderValue = view.findViewById(R.id.tvReminderValue);
+        switchDarkTheme = view.findViewById(R.id.switchDarkTheme);
+        switchBrutalMode = view.findViewById(R.id.switchBrutalMode);
+        switchDailySummary = view.findViewById(R.id.switchDailySummary);
+        switchWeeklyReport = view.findViewById(R.id.switchWeeklyReport);
+        seekReminderMinutes = view.findViewById(R.id.seekReminderMinutes);
+        chipGoalFitness = view.findViewById(R.id.chipGoalFitness);
+        chipGoalStudy = view.findViewById(R.id.chipGoalStudy);
+        chipGoalProductivity = view.findViewById(R.id.chipGoalProductivity);
+        chipGoalFinance = view.findViewById(R.id.chipGoalFinance);
+        btnSavePreferences = view.findViewById(R.id.btnSavePreferences);
         btnLogout = view.findViewById(R.id.btnLogout);
 
-        btnLogout.setOnClickListener(v -> showLogoutConfirmation());
-
-        loadUserData();
+        seekReminderMinutes.setMax(REMINDER_OPTIONS.length - 1);
+        syncThemeSwitch();
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        FirebaseUser currentUser = auth.getCurrentUser();
-        if (currentUser != null) {
-            tvUserEmail.setText(currentUser.getEmail());
-            tvMemberSince.setText(formatMemberSince(currentUser));
-        }
-        loadUserData();
+    private void setupListeners() {
+        btnSavePreferences.setOnClickListener(v -> savePreferences());
+        btnLogout.setOnClickListener(v -> showLogoutConfirmation());
+        switchDarkTheme.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (bindingThemeSwitch) {
+                return;
+            }
+            ThemeManager.toggleTheme(requireContext());
+            requireActivity().recreate();
+        });
+        switchBrutalMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            tvNotificationIntensity.setText(isChecked ? "Brutal" : "Normal");
+            tvNotificationIntensity.setBackgroundResource(isChecked ? R.drawable.bg_badge_danger : R.drawable.bg_badge_surface);
+        });
+        seekReminderMinutes.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                tvReminderValue.setText(REMINDER_OPTIONS[progress] + " min");
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+    }
+
+    private void syncThemeSwitch() {
+        bindingThemeSwitch = true;
+        int nightMode = AppCompatDelegate.getDefaultNightMode();
+        boolean darkEnabled = nightMode == AppCompatDelegate.MODE_NIGHT_YES
+                || (nightMode == AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                && (getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                == android.content.res.Configuration.UI_MODE_NIGHT_YES);
+        switchDarkTheme.setChecked(darkEnabled);
+        bindingThemeSwitch = false;
     }
 
     private void loadUserData() {
@@ -90,7 +179,7 @@ public class ProfileFragment extends Fragment {
                 requireActivity().runOnUiThread(() -> {
                     tvUserLevel.setText("Level " + profile.getCurrentLevel() + " • " + profile.getLevelName());
                     tvXpProgress.setText(profile.getCurrentXP() + " / " + profile.getXpToNextLevel() + " XP");
-                    tvActivityCompletionRate.setText(String.format(java.util.Locale.getDefault(), "%.0f%%", profile.getActivityCompletionRate()));
+                    tvActivityCompletionRate.setText(String.format(Locale.getDefault(), "%.0f%%", profile.getActivityCompletionRate()));
                     tvDisciplineStreak.setText(String.valueOf(profile.getDailyDisciplineStreak()));
                 });
             }
@@ -132,18 +221,117 @@ public class ProfileFragment extends Fragment {
                     tvPendingDecisions.setText(String.valueOf(finalPending));
                 });
             } catch (Exception e) {
-                requireActivity().runOnUiThread(() -> {
-                    Toast.makeText(requireContext(), "Failed to load stats", Toast.LENGTH_SHORT).show();
-                });
+                if (!isAdded()) {
+                    return;
+                }
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(requireContext(), "Failed to load stats", Toast.LENGTH_SHORT).show()
+                );
             }
         }).start();
     }
 
+    private void loadPreferences() {
+        userPreferencesRepository.getUserPreferences(new UserPreferencesRepository.PreferencesCallback() {
+            @Override
+            public void onSuccess(com.sai.decisiongraveyard.model.UserPreferences preferences) {
+                if (!isAdded()) {
+                    return;
+                }
+                requireActivity().runOnUiThread(() -> {
+                    boolean brutalMode = "brutal".equalsIgnoreCase(preferences.getNotificationIntensity());
+                    switchBrutalMode.setChecked(brutalMode);
+                    switchDailySummary.setChecked(preferences.isDailySummaryEnabled());
+                    switchWeeklyReport.setChecked(preferences.isWeeklyReportEnabled());
+                    tvNotificationIntensity.setText(brutalMode ? "Brutal" : "Normal");
+                    tvNotificationIntensity.setBackgroundResource(brutalMode ? R.drawable.bg_badge_danger : R.drawable.bg_badge_surface);
+
+                    int reminderIndex = reminderIndexFor(preferences.getPreMissReminderMinutes());
+                    seekReminderMinutes.setProgress(reminderIndex);
+                    tvReminderValue.setText(REMINDER_OPTIONS[reminderIndex] + " min");
+
+                    List<String> goals = preferences.getSelectedGoals();
+                    chipGoalFitness.setChecked(goals != null && goals.contains("fitness"));
+                    chipGoalStudy.setChecked(goals != null && goals.contains("study"));
+                    chipGoalProductivity.setChecked(goals != null && goals.contains("productivity"));
+                    chipGoalFinance.setChecked(goals != null && goals.contains("finance"));
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                if (!isAdded()) {
+                    return;
+                }
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
+                );
+            }
+        });
+    }
+
+    private void savePreferences() {
+        com.sai.decisiongraveyard.model.UserPreferences preferences = new com.sai.decisiongraveyard.model.UserPreferences();
+        preferences.setNotificationIntensity(switchBrutalMode.isChecked() ? "brutal" : "normal");
+        preferences.setDailySummaryEnabled(switchDailySummary.isChecked());
+        preferences.setWeeklyReportEnabled(switchWeeklyReport.isChecked());
+        preferences.setPreMissReminderMinutes(REMINDER_OPTIONS[seekReminderMinutes.getProgress()]);
+        preferences.setSelectedGoals(getSelectedGoals());
+
+        userPreferencesRepository.updateUserPreferences(preferences, new UserPreferencesRepository.ActionCallback() {
+            @Override
+            public void onSuccess() {
+                if (!isAdded()) {
+                    return;
+                }
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(requireContext(), getString(R.string.profile_preferences_saved), Toast.LENGTH_SHORT).show()
+                );
+            }
+
+            @Override
+            public void onError(String error) {
+                if (!isAdded()) {
+                    return;
+                }
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
+                );
+            }
+        });
+    }
+
+    private List<String> getSelectedGoals() {
+        List<String> goals = new ArrayList<>();
+        if (chipGoalFitness.isChecked()) {
+            goals.add("fitness");
+        }
+        if (chipGoalStudy.isChecked()) {
+            goals.add("study");
+        }
+        if (chipGoalProductivity.isChecked()) {
+            goals.add("productivity");
+        }
+        if (chipGoalFinance.isChecked()) {
+            goals.add("finance");
+        }
+        return goals;
+    }
+
+    private int reminderIndexFor(int minutes) {
+        for (int i = 0; i < REMINDER_OPTIONS.length; i++) {
+            if (REMINDER_OPTIONS[i] == minutes) {
+                return i;
+            }
+        }
+        return 1;
+    }
+
     private void showLogoutConfirmation() {
         new AlertDialog.Builder(requireContext())
-                .setTitle("Logout")
+                .setTitle(getString(R.string.logout))
                 .setMessage(R.string.logout_confirmation)
-                .setPositiveButton("Logout", (dialog, which) -> performLogout())
+                .setPositiveButton(getString(R.string.logout), (dialog, which) -> performLogout())
                 .setNegativeButton("Cancel", null)
                 .show();
     }
@@ -164,12 +352,10 @@ public class ProfileFragment extends Fragment {
         if (currentUser == null || currentUser.getMetadata() == null) {
             return getString(R.string.profile_member_unknown);
         }
-
         long createdAt = currentUser.getMetadata().getCreationTimestamp();
         if (createdAt <= 0L) {
             return getString(R.string.profile_member_unknown);
         }
-
         return DateUtils.formatDateTime(createdAt);
     }
 }

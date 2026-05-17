@@ -6,6 +6,10 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,34 +18,42 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.sai.decisiongraveyard.adapter.DecisionAdapter;
 import com.sai.decisiongraveyard.model.DecisionRecord;
 import com.sai.decisiongraveyard.notifications.ActivityScheduler;
 import com.sai.decisiongraveyard.notifications.NotificationScheduler;
 import com.sai.decisiongraveyard.notifications.SmartNotificationScheduler;
 import com.sai.decisiongraveyard.repository.DecisionRepository;
 import com.sai.decisiongraveyard.ui.activities.ActivityListFragment;
+import com.sai.decisiongraveyard.ui.auth.LoginActivity;
 import com.sai.decisiongraveyard.ui.checkin.DailyCheckInDialog;
 import com.sai.decisiongraveyard.ui.dashboard.DashboardContainerFragment;
 import com.sai.decisiongraveyard.ui.home.HomeFragment;
 import com.sai.decisiongraveyard.ui.insights.InsightsFragment;
-import com.sai.decisiongraveyard.ui.settings.SettingsFragment;
-import com.sai.decisiongraveyard.ui.timeline.TimelineFragment;
-import com.sai.decisiongraveyard.adapter.DecisionAdapter;
-import com.sai.decisiongraveyard.ui.auth.LoginActivity;
 import com.sai.decisiongraveyard.ui.onboarding.OnboardingDialog;
+import com.sai.decisiongraveyard.ui.profile.ProfileFragment;
+import com.sai.decisiongraveyard.ui.settings.SettingsFragment;
 import com.sai.decisiongraveyard.util.ThemeManager;
+import com.sai.decisiongraveyard.util.ViewPressAnimations;
 
 public class MainActivity extends AppCompatActivity implements DecisionAdapter.OnDecisionClickListener {
 
     private static final int PERMISSION_REQUEST_CODE = 1001;
-    
+    private static final int[] NAV_IDS = {
+            R.id.nav_dashboard,
+            R.id.nav_activities,
+            R.id.nav_decisions,
+            R.id.nav_insights,
+            R.id.nav_profile
+    };
+
     private MaterialToolbar toolbar;
-    private BottomNavigationView bottomNavigationView;
+    private ViewGroup bottomNavigation;
     private FirebaseAuth auth;
     private DecisionRepository decisionRepository;
+    private int selectedTabId = R.id.nav_dashboard;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements DecisionAdapter.O
         setContentView(R.layout.activity_main);
 
         toolbar = findViewById(R.id.topAppBar);
-        bottomNavigationView = findViewById(R.id.bottomNavigation);
+        bottomNavigation = findViewById(R.id.bottomNavigation);
 
         setSupportActionBar(toolbar);
         toolbar.setOnMenuItemClickListener(this::onToolbarItemSelected);
@@ -59,27 +71,67 @@ public class MainActivity extends AppCompatActivity implements DecisionAdapter.O
         decisionRepository = com.sai.decisiongraveyard.repository.RepositoryProvider.getInstance(this).getDecisionRepository();
         NotificationScheduler.createNotificationChannel(this);
         ActivityScheduler.scheduleMissedActivityCheck(this);
-        
-        // Initialize smart notification system
         SmartNotificationScheduler.scheduleDailySummary(this);
         SmartNotificationScheduler.scheduleWeeklyReport(this);
         SmartNotificationScheduler.scheduleBehavioralTrigger(this);
 
-        // Request POST_NOTIFICATIONS permission on Android 13+
         requestNotificationPermission();
-
         setupBottomNavigation();
+        applyBottomNavFrostedGlass();
 
-        // Load default fragment
         if (savedInstanceState == null) {
-            loadFragment(new DashboardContainerFragment());
-            bottomNavigationView.setSelectedItemId(R.id.nav_dashboard);
+            navigateToRootDestination(R.id.nav_dashboard);
+        } else {
+            updateNavSelection(selectedTabId);
+        }
+    }
+
+    private void setupBottomNavigation() {
+        configureNavItem(R.id.nav_dashboard, R.drawable.ic_home, getString(R.string.dashboard));
+        configureNavItem(R.id.nav_activities, R.drawable.ic_activities, getString(R.string.activities));
+        configureNavItem(R.id.nav_decisions, R.drawable.ic_decisions, getString(R.string.decisions));
+        configureNavItem(R.id.nav_insights, R.drawable.ic_insights, getString(R.string.insights));
+        configureNavItem(R.id.nav_profile, R.drawable.ic_profile, getString(R.string.profile));
+    }
+
+    private void configureNavItem(int viewId, int iconRes, CharSequence label) {
+        View itemView = findViewById(viewId);
+        ImageView icon = itemView.findViewById(R.id.navIcon);
+        TextView text = itemView.findViewById(R.id.navLabel);
+        icon.setImageResource(iconRes);
+        text.setText(label);
+        itemView.setOnClickListener(v -> navigateToRootDestination(viewId));
+        ViewPressAnimations.attach(itemView);
+    }
+
+    private void applyBottomNavFrostedGlass() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            bottomNavigation.setBackgroundResource(R.drawable.bg_bottom_nav);
+            bottomNavigation.setClipToOutline(true);
+        }
+    }
+
+    private void updateNavSelection(int selectedId) {
+        for (int navId : NAV_IDS) {
+            View item = findViewById(navId);
+            boolean selected = navId == selectedId;
+            item.setSelected(selected);
+            item.setActivated(selected);
+            item.setBackgroundResource(selected ? R.drawable.bg_bottom_nav_item_selected : android.R.color.transparent);
+
+            View indicator = item.findViewById(R.id.navIndicator);
+            if (indicator != null) {
+                indicator.setVisibility(selected ? View.VISIBLE : View.INVISIBLE);
+                if (selected) {
+                    indicator.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(180).start();
+                }
+            }
         }
     }
 
     private void requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) 
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.POST_NOTIFICATIONS},
@@ -87,11 +139,9 @@ public class MainActivity extends AppCompatActivity implements DecisionAdapter.O
             }
         }
 
-        // Check SCHEDULE_EXACT_ALARM permission on Android 12+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             android.app.AlarmManager alarmManager = getSystemService(android.app.AlarmManager.class);
             if (alarmManager != null && !alarmManager.canScheduleExactAlarms()) {
-                // Guide user to settings to grant permission
                 new androidx.appcompat.app.AlertDialog.Builder(this)
                         .setTitle("Permission Required")
                         .setMessage("To receive timely notifications for decisions and activities, please enable 'Alarms & Reminders' permission in settings.")
@@ -108,13 +158,6 @@ public class MainActivity extends AppCompatActivity implements DecisionAdapter.O
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted
-            } else {
-                // Permission denied - notifications won't work
-            }
-        }
     }
 
     @Override
@@ -124,11 +167,9 @@ public class MainActivity extends AppCompatActivity implements DecisionAdapter.O
         if (currentUser == null) {
             redirectToLogin();
         } else {
-            // Show onboarding dialog for new users
             if (!OnboardingDialog.hasCompletedOnboarding(this)) {
                 showOnboardingDialog();
             }
-            // Show daily check-in dialog
             showDailyCheckInDialog();
         }
     }
@@ -137,53 +178,39 @@ public class MainActivity extends AppCompatActivity implements DecisionAdapter.O
         OnboardingDialog dialog = new OnboardingDialog(this, new OnboardingDialog.OnboardingCompleteListener() {
             @Override
             public void onOnboardingCompleted() {
-                // Onboarding completed
             }
 
             @Override
             public void onOnboardingSkipped() {
-                // Onboarding skipped
             }
         });
         dialog.show();
     }
 
     private void showDailyCheckInDialog() {
-        // Check if check-in has already been shown today
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault());
         String today = sdf.format(new java.util.Date());
-        
+
         android.content.SharedPreferences prefs = getSharedPreferences("daily_checkin", MODE_PRIVATE);
         String lastCheckInDate = prefs.getString("last_checkin_date", "");
-        
+
         if (today.equals(lastCheckInDate)) {
-            // Already shown today, don't show again
             return;
         }
-        
+
         DailyCheckInDialog dialog = new DailyCheckInDialog();
         dialog.setCheckInCompleteListener(new DailyCheckInDialog.CheckInCompleteListener() {
             @Override
             public void onCheckInComplete() {
-                // Save that check-in was completed today
-                android.content.SharedPreferences.Editor editor = prefs.edit();
-                editor.putString("last_checkin_date", today);
-                editor.apply();
+                prefs.edit().putString("last_checkin_date", today).apply();
             }
 
             @Override
             public void onCheckInSkipped() {
-                // Save that check-in was shown today (even if skipped)
-                android.content.SharedPreferences.Editor editor = prefs.edit();
-                editor.putString("last_checkin_date", today);
-                editor.apply();
+                prefs.edit().putString("last_checkin_date", today).apply();
             }
         });
         dialog.show(getSupportFragmentManager(), "daily_check_in");
-    }
-
-    private void setupBottomNavigation() {
-        bottomNavigationView.setOnItemSelectedListener(item -> navigateToRootDestination(item.getItemId()));
     }
 
     public void loadFragment(Fragment fragment) {
@@ -194,11 +221,7 @@ public class MainActivity extends AppCompatActivity implements DecisionAdapter.O
     }
 
     public void navigateToTab(int itemId) {
-        if (bottomNavigationView.getSelectedItemId() == itemId) {
-            navigateToRootDestination(itemId);
-            return;
-        }
-        bottomNavigationView.setSelectedItemId(itemId);
+        navigateToRootDestination(itemId);
     }
 
     private boolean onToolbarItemSelected(MenuItem item) {
@@ -208,7 +231,6 @@ public class MainActivity extends AppCompatActivity implements DecisionAdapter.O
             recreate();
             return true;
         } else if (itemId == R.id.action_settings) {
-            toolbar.setTitle(R.string.settings);
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragmentContainer, new SettingsFragment())
@@ -229,9 +251,10 @@ public class MainActivity extends AppCompatActivity implements DecisionAdapter.O
             return false;
         }
 
+        selectedTabId = itemId;
         getSupportFragmentManager().popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE);
-        toolbar.setTitle(getTitleForDestination(itemId));
         loadFragment(selectedFragment);
+        updateNavSelection(itemId);
         return true;
     }
 
@@ -245,32 +268,13 @@ public class MainActivity extends AppCompatActivity implements DecisionAdapter.O
         if (itemId == R.id.nav_decisions) {
             return new HomeFragment();
         }
-        if (itemId == R.id.nav_timeline) {
-            return new TimelineFragment();
-        }
         if (itemId == R.id.nav_insights) {
             return new InsightsFragment();
         }
+        if (itemId == R.id.nav_profile) {
+            return new ProfileFragment();
+        }
         return null;
-    }
-
-    private CharSequence getTitleForDestination(int itemId) {
-        if (itemId == R.id.nav_dashboard) {
-            return getString(R.string.dashboard);
-        }
-        if (itemId == R.id.nav_activities) {
-            return getString(R.string.activities);
-        }
-        if (itemId == R.id.nav_decisions) {
-            return getString(R.string.decisions);
-        }
-        if (itemId == R.id.nav_timeline) {
-            return getString(R.string.timeline);
-        }
-        if (itemId == R.id.nav_insights) {
-            return getString(R.string.insights);
-        }
-        return getString(R.string.app_name);
     }
 
     @Override

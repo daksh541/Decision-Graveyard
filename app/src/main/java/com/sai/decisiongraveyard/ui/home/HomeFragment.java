@@ -52,7 +52,7 @@ public class HomeFragment extends Fragment {
         tvEmptyState = view.findViewById(R.id.tvEmptyState);
         RecyclerView recyclerView = view.findViewById(R.id.recyclerDecisions);
         ChipGroup chipGroupStatus = view.findViewById(R.id.chipGroupStatus);
-        com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton fabQuickAction = view.findViewById(R.id.fabQuickAction);
+        com.google.android.material.floatingactionbutton.FloatingActionButton fabQuickAction = view.findViewById(R.id.fabQuickAction);
 
         decisionAdapter = new DecisionAdapter(record -> {
             Intent intent = new Intent(requireContext(), DecisionDetailActivity.class);
