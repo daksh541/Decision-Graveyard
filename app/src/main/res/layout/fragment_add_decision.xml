@@ -3,124 +3,181 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:background="@android:color/transparent">
+    android:background="@android:color/transparent"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:paddingStart="20dp"
+        android:paddingTop="28dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="120dp">
 
-        <!-- Header Card -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Log Decision"
+            android:textColor="@color/text_primary"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="What are you choosing right now?"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.DecisionGraveyard.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            style="@style/Widget.DecisionGraveyard.Card"
-            app:cardCornerRadius="24dp">
+            android:layout_marginTop="20dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="18dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Bury a decision"
-                    android:textColor="@color/text_primary"
-                    android:textSize="24sp"
-                    android:fontFamily="@font/inter_bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="Your future self will judge this later."
+                    android:text="Decision Title"
+                    android:textAllCaps="true"
                     android:textColor="@color/text_secondary"
-                    android:textSize="15sp" />
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layoutTitle"
+                    style="@style/Widget.DecisionGraveyard.TextInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="@string/decision_title"
+                    app:expandedHintEnabled="false">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textCapSentences"
+                        android:maxLength="80"
+                        android:paddingVertical="14dp" />
+                </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Title Input -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/layoutTitle"
-            style="@style/Widget.DecisionGraveyard.TextInput"
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.DecisionGraveyard.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:hint="@string/decision_title"
-            app:expandedHintEnabled="false">
+            android:layout_marginTop="16dp">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etTitle"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textCapSentences"
-                android:maxLength="80"
-                android:paddingVertical="16dp" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:orientation="vertical"
+                android:padding="18dp">
 
-        <!-- Description Input -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/layoutDescription"
-            style="@style/Widget.DecisionGraveyard.TextInput"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Context &amp; Notes"
+                    android:textAllCaps="true"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layoutDescription"
+                    style="@style/Widget.DecisionGraveyard.TextInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="@string/decision_description">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="top"
+                        android:inputType="textCapSentences|textMultiLine"
+                        android:minLines="3"
+                        android:paddingVertical="14dp" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.DecisionGraveyard.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="@string/decision_description">
+            android:layout_marginTop="16dp">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etDescription"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="top"
-                android:inputType="textCapSentences|textMultiLine"
-                android:minLines="3"
-                android:paddingVertical="16dp" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:orientation="vertical"
+                android:padding="18dp">
 
-        <!-- Category Selection -->
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.DecisionGraveyard.TextInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="@string/decision_category"
-            app:endIconMode="dropdown_menu">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Category"
+                    android:textAllCaps="true"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
 
-            <AutoCompleteTextView
-                android:id="@+id/actCategory"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="none"
-                android:paddingVertical="16dp"
-                android:focusable="false"
-                android:clickable="true" />
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.DecisionGraveyard.TextInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="@string/decision_category"
+                    app:endIconMode="dropdown_menu">
 
-        <!-- Risk Meter (Dynamic) -->
+                    <AutoCompleteTextView
+                        android:id="@+id/actCategory"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="false"
+                        android:inputType="none"
+                        android:paddingVertical="14dp" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardRiskMeter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            style="@style/Widget.DecisionGraveyard.Card"
+            app:cardBackgroundColor="@color/danger_container"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/danger"
+            app:strokeWidth="1dp"
             android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="16dp"
-                android:gravity="center_vertical">
+                android:padding="18dp">
 
                 <ProgressBar
                     android:id="@+id/riskProgress"
                     style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
                     android:indeterminate="false"
                     android:max="100"
                     android:progress="50"
@@ -129,110 +186,118 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="16dp">
+                    android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/tvRiskLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Risk Level"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
+                        android:text="Warning"
+                        android:textAllCaps="true"
+                        android:textColor="@color/danger"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvRiskValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Medium risk"
-                        android:textColor="@color/warning"
-                        android:textSize="14sp"
-                        android:fontFamily="@font/inter_semibold" />
+                        android:layout_marginTop="4dp"
+                        android:text="You usually regret this type of decision."
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <TextView
             android:id="@+id/tvRiskWarning"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:textSize="12sp"
+            android:textColor="@color/danger"
+            android:textSize="13sp"
+            android:textStyle="bold"
             android:visibility="gone" />
 
-        <!-- Schedule Section Header -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="@string/evaluation_schedule"
-            android:textColor="@color/text_primary"
-            android:textSize="16sp"
-            android:fontFamily="@font/inter_semibold" />
-
-        <!-- Segmented Control for Schedule -->
-        <com.google.android.material.button.MaterialButtonToggleGroup
-            android:id="@+id/scheduleToggleGroup"
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.DecisionGraveyard.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:selectionRequired="true"
-            app:singleSelection="true">
+            android:layout_marginTop="16dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn3Days"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="3 Days"
-                android:textSize="12sp"
-                app:cornerRadius="12dp" />
+                android:orientation="vertical"
+                android:padding="18dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn1Week"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="1 Week"
-                android:textSize="12sp"
-                app:cornerRadius="12dp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Schedule"
+                    android:textAllCaps="true"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCustom"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Custom"
-                android:textSize="12sp"
-                app:cornerRadius="12dp" />
-        </com.google.android.material.button.MaterialButtonToggleGroup>
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/scheduleToggleGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    app:selectionRequired="true"
+                    app:singleSelection="true">
 
-        <!-- Custom Date Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnPickDate"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/hint_custom_date"
-            android:visibility="gone"
-            app:icon="@android:drawable/ic_menu_my_calendar"
-            app:iconGravity="textStart" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn3Days"
+                        style="@style/Widget.DecisionGraveyard.Button.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="3 Days" />
 
-        <!-- Future You Preview Card -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn1Week"
+                        style="@style/Widget.DecisionGraveyard.Button.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="1 Week" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCustom"
+                        style="@style/Widget.DecisionGraveyard.Button.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Custom" />
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPickDate"
+                    style="@style/Widget.DecisionGraveyard.Button.Secondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/hint_custom_date"
+                    android:visibility="gone"
+                    app:icon="@android:drawable/ic_menu_my_calendar"
+                    app:iconGravity="textStart" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardFutureYou"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="16dp"
             app:cardBackgroundColor="@color/pending_container"
-            app:cardCornerRadius="16dp"
+            app:cardCornerRadius="22dp"
             app:cardElevation="0dp"
-            app:strokeColor="@color/pending"
+            app:strokeColor="@color/primary"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -244,10 +309,11 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Future You says:"
-                    android:textColor="@color/pending"
-                    android:textSize="12sp"
-                    android:fontFamily="@font/inter_medium" />
+                    android:text="Future You"
+                    android:textAllCaps="true"
+                    android:textColor="@color/primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvFutureYouMessage"
@@ -257,31 +323,26 @@
                     android:text="@string/future_you_3days"
                     android:textColor="@color/text_primary"
                     android:textSize="15sp"
-                    android:lineSpacingMultiplier="1.2" />
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvEvaluationDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:text="Apr 19, 2026 at 09:00 AM"
+                    android:text="Review on Apr 19, 2026"
                     android:textColor="@color/text_secondary"
                     android:textSize="13sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Save Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSaveDecision"
             style="@style/Widget.DecisionGraveyard.Button.Filled"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
-            android:layout_marginBottom="16dp"
-            android:paddingVertical="16dp"
-            android:text="@string/save_decision"
-            android:textSize="16sp"
-            app:cornerRadius="16dp" />
+            android:layout_marginTop="24dp"
+            android:text="Log Decision" />
 
     </LinearLayout>
 </ScrollView>

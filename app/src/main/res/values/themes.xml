@@ -3,14 +3,14 @@
     <!-- Main Theme - Dark Mode Default -->
     <style name="Theme.DecisionGraveyard" parent="Theme.Material3.Dark.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
-        <item name="colorOnPrimary">@color/primary_variant</item>
+        <item name="colorOnPrimary">@color/white</item>
         <item name="colorPrimaryContainer">@color/pending_container</item>
-        <item name="colorOnPrimaryContainer">@color/pending</item>
+        <item name="colorOnPrimaryContainer">@color/white</item>
 
         <item name="colorSecondary">@color/secondary</item>
-        <item name="colorOnSecondary">@color/primary_variant</item>
+        <item name="colorOnSecondary">@color/white</item>
         <item name="colorSecondaryContainer">@color/accent_container</item>
-        <item name="colorOnSecondaryContainer">@color/accent</item>
+        <item name="colorOnSecondaryContainer">@color/white</item>
 
         <item name="colorSurface">@color/surface</item>
         <item name="colorOnSurface">@color/text_primary</item>
@@ -70,21 +70,28 @@
 
     <!-- Button Styles -->
     <style name="Widget.DecisionGraveyard.Button" parent="Widget.Material3.Button">
-        <item name="cornerRadius">16dp</item>
+        <item name="cornerRadius">20dp</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:fontFamily">@font/inter_semibold</item>
         <item name="android:letterSpacing">0.01</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="elevation">0dp</item>
     </style>
 
     <style name="Widget.DecisionGraveyard.Button.Filled" parent="Widget.DecisionGraveyard.Button">
         <item name="backgroundTint">@color/primary</item>
-        <item name="android:textColor">@color/primary_variant</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="Widget.DecisionGraveyard.Button.Secondary" parent="Widget.DecisionGraveyard.Button">
+        <item name="backgroundTint">@color/surface_variant</item>
+        <item name="android:textColor">@color/text_primary</item>
     </style>
 
     <style name="Widget.DecisionGraveyard.Button.Good" parent="Widget.DecisionGraveyard.Button">
         <item name="backgroundTint">@color/success</item>
-        <item name="android:textColor">@color/primary_variant</item>
-        <item name="iconTint">@color/primary_variant</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="iconTint">@color/white</item>
     </style>
 
     <style name="Widget.DecisionGraveyard.Button.Bad" parent="Widget.DecisionGraveyard.Button">
@@ -93,12 +100,17 @@
         <item name="iconTint">@color/white</item>
     </style>
 
+    <style name="TextAppearance.DecisionGraveyard.DisplayMetric" parent="TextAppearance.Material3.DisplayLarge">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:fontFamily">@font/playfair_display</item>
+    </style>
+
     <!-- Card Styles -->
     <style name="Widget.DecisionGraveyard.Card" parent="Widget.Material3.CardView.Elevated">
-        <item name="cardBackgroundColor">@color/surface_card</item>
-        <item name="cardCornerRadius">20dp</item>
-        <item name="cardElevation">4dp</item>
-        <item name="strokeColor">@color/divider</item>
+        <item name="cardBackgroundColor">@color/surface_card_glass</item>
+        <item name="cardCornerRadius">24dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/border_glass</item>
         <item name="strokeWidth">1dp</item>
         <item name="rippleColor">@color/ripple</item>
     </style>
@@ -115,7 +127,7 @@
         <item name="checkedIconTint">@color/chip_selected_text</item>
         <item name="chipStrokeColor">@color/divider</item>
         <item name="chipStrokeWidth">1dp</item>
-        <item name="chipCornerRadius">12dp</item>
+        <item name="chipCornerRadius">16dp</item>
     </style>
 
     <style name="Widget.DecisionGraveyard.Chip.Category" parent="Widget.DecisionGraveyard.Chip">
@@ -129,28 +141,35 @@
     <!-- Input Styles -->
     <style name="Widget.DecisionGraveyard.TextInput" parent="Widget.Material3.TextInputLayout.OutlinedBox">
         <item name="boxStrokeColor">@color/divider</item>
-        <item name="boxCornerRadiusTopStart">12dp</item>
-        <item name="boxCornerRadiusTopEnd">12dp</item>
-        <item name="boxCornerRadiusBottomStart">12dp</item>
-        <item name="boxCornerRadiusBottomEnd">12dp</item>
+        <item name="boxBackgroundColor">@color/surface_variant</item>
+        <item name="boxCornerRadiusTopStart">18dp</item>
+        <item name="boxCornerRadiusTopEnd">18dp</item>
+        <item name="boxCornerRadiusBottomStart">18dp</item>
+        <item name="boxCornerRadiusBottomEnd">18dp</item>
         <item name="hintTextColor">@color/text_tertiary</item>
         <item name="cursorColor">@color/primary</item>
     </style>
 
     <!-- Bottom Navigation -->
     <style name="Widget.DecisionGraveyard.BottomNav" parent="Widget.Material3.BottomNavigationView">
-        <item name="backgroundTint">@color/surface_card</item>
-        <item name="itemIconTint">@color/primary</item>
-        <item name="itemTextColor">@color/primary</item>
+        <item name="backgroundTint">@color/transparent</item>
+        <item name="itemIconTint">@color/bottom_nav_item_color</item>
+        <item name="itemTextColor">@color/bottom_nav_item_color</item>
         <item name="itemRippleColor">@color/ripple</item>
-        <item name="elevation">8dp</item>
+        <item name="itemActiveIndicatorStyle">@style/Widget.DecisionGraveyard.BottomNav.ActiveIndicator</item>
+        <item name="elevation">0dp</item>
+    </style>
+
+    <style name="Widget.DecisionGraveyard.BottomNav.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/pending_container</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.DecisionGraveyard.Medium</item>
     </style>
 
     <!-- FAB Style -->
     <style name="Widget.DecisionGraveyard.FAB" parent="Widget.Material3.FloatingActionButton.Primary">
         <item name="backgroundTint">@color/primary</item>
-        <item name="tint">@color/primary_variant</item>
-        <item name="elevation">6dp</item>
+        <item name="tint">@color/white</item>
+        <item name="elevation">0dp</item>
         <item name="pressedTranslationZ">12dp</item>
     </style>
 
@@ -168,7 +187,7 @@
     <!-- Toolbar Style -->
     <style name="Widget.DecisionGraveyard.Toolbar" parent="Widget.Material3.Toolbar">
         <item name="titleTextColor">@color/text_primary</item>
-        <item name="background">@color/surface</item>
+        <item name="background">@android:color/transparent</item>
         <item name="titleTextAppearance">@style/TextAppearance.DecisionGraveyard.TitleLarge</item>
         <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.DecisionGraveyard.Small</item>
 

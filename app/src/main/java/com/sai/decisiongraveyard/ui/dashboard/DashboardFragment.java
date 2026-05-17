@@ -1,6 +1,7 @@
 package com.sai.decisiongraveyard.ui.dashboard;
 
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,35 +11,49 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.sai.decisiongraveyard.ui.widgets.DecisionScoreRingView;
+import com.sai.decisiongraveyard.util.ViewPressAnimations;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.sai.decisiongraveyard.R;
 import com.sai.decisiongraveyard.model.UserProfile;
 import com.sai.decisiongraveyard.repository.RepositoryProvider;
+import com.sai.decisiongraveyard.ui.activities.ActivityListFragment;
+import com.sai.decisiongraveyard.ui.add.AddDecisionFragment;
 import com.sai.decisiongraveyard.ui.achievements.AchievementManager;
+import com.sai.decisiongraveyard.ui.insights.InsightsFragment;
+import com.sai.decisiongraveyard.ui.timeline.TimelineFragment;
 import com.sai.decisiongraveyard.viewmodel.DashboardViewModel;
 
+import java.util.Calendar;
 import java.util.Locale;
 
 public class DashboardFragment extends Fragment {
 
     private DashboardViewModel viewModel;
     private AchievementManager achievementManager;
-    private TextView tvLevelName;
-    private TextView tvLevelNumber;
+    private TextView tvGreeting;
+    private TextView tvProfileName;
+    private TextView tvLevelBadge;
     private TextView tvXPProgress;
     private ProgressBar progressXP;
-    private TextView tvDisciplineStreak;
-    private TextView tvMissedStreak;
+    private DecisionScoreRingView scoreRing;
     private TextView tvDecisionScore;
-    private TextView tvCompletionRate;
-    private TextView tvTodayDecisions;
-    private TextView tvTodayActivities;
-    private TextView tvBehavioralInsight;
-    private TextView tvWeeklySummary;
-    private TextView tvDay1, tvDay2, tvDay3, tvDay4, tvDay5, tvDay6, tvDay7;
+    private TextView tvScoreTrend;
+    private TextView tvTodayCompleted;
+    private TextView tvTodayMissed;
+    private TextView tvTodayRisky;
+    private TextView tvDisciplineStreak;
+    private TextView tvStreakWarning;
+    private TextView tvCoachMessage;
     private ProgressBar progressBar;
+
+    private int todayCompleted;
+    private int todayMissed;
+    private int todayRisky;
+    private double activityRate;
 
     @Nullable
     @Override
@@ -66,45 +81,81 @@ public class DashboardFragment extends Fragment {
     }
 
     private void bindViews(View view) {
-        tvLevelName = view.findViewById(R.id.tvLevelName);
-        tvLevelNumber = view.findViewById(R.id.tvLevelNumber);
+        tvGreeting = view.findViewById(R.id.tvGreeting);
+        tvProfileName = view.findViewById(R.id.tvProfileName);
+        tvLevelBadge = view.findViewById(R.id.tvLevelBadge);
         tvXPProgress = view.findViewById(R.id.tvXPProgress);
         progressXP = view.findViewById(R.id.progressXP);
-        tvDisciplineStreak = view.findViewById(R.id.tvDisciplineStreak);
-        tvMissedStreak = view.findViewById(R.id.tvMissedStreak);
+        scoreRing = view.findViewById(R.id.scoreRing);
         tvDecisionScore = view.findViewById(R.id.tvDecisionScore);
-        tvCompletionRate = view.findViewById(R.id.tvCompletionRate);
-        tvTodayDecisions = view.findViewById(R.id.tvTodayDecisions);
-        tvTodayActivities = view.findViewById(R.id.tvTodayActivities);
-        tvBehavioralInsight = view.findViewById(R.id.tvBehavioralInsight);
-        tvWeeklySummary = view.findViewById(R.id.tvWeeklySummary);
-        tvDay1 = view.findViewById(R.id.tvDay1);
-        tvDay2 = view.findViewById(R.id.tvDay2);
-        tvDay3 = view.findViewById(R.id.tvDay3);
-        tvDay4 = view.findViewById(R.id.tvDay4);
-        tvDay5 = view.findViewById(R.id.tvDay5);
-        tvDay6 = view.findViewById(R.id.tvDay6);
-        tvDay7 = view.findViewById(R.id.tvDay7);
+        tvScoreTrend = view.findViewById(R.id.tvScoreTrend);
+        tvTodayCompleted = view.findViewById(R.id.tvTodayCompleted);
+        tvTodayMissed = view.findViewById(R.id.tvTodayMissed);
+        tvTodayRisky = view.findViewById(R.id.tvTodayRisky);
+        tvDisciplineStreak = view.findViewById(R.id.tvDisciplineStreak);
+        tvStreakWarning = view.findViewById(R.id.tvStreakWarning);
+        tvCoachMessage = view.findViewById(R.id.tvCoachMessage);
         progressBar = view.findViewById(R.id.progressBar);
+
+        tvGreeting.setText(resolveGreeting());
+        tvProfileName.setText(resolveProfileName());
+        View btnQuickDecision = view.findViewById(R.id.btnQuickDecision);
+        View btnQuickActivities = view.findViewById(R.id.btnQuickActivities);
+        View btnQuickTimeline = view.findViewById(R.id.btnQuickTimeline);
+        View btnQuickInsights = view.findViewById(R.id.btnQuickInsights);
+
+        btnQuickDecision.setOnClickListener(v -> openFragment(new AddDecisionFragment()));
+        btnQuickActivities.setOnClickListener(v -> openFragment(new ActivityListFragment()));
+        btnQuickTimeline.setOnClickListener(v -> openFragment(new TimelineFragment()));
+        btnQuickInsights.setOnClickListener(v -> openFragment(new InsightsFragment()));
+
+        ViewPressAnimations.attach(btnQuickDecision);
+        ViewPressAnimations.attach(btnQuickActivities);
+        ViewPressAnimations.attach(btnQuickTimeline);
+        ViewPressAnimations.attach(btnQuickInsights);
+
+        View cardHero = view.findViewById(R.id.cardHeroScore);
+        View cardSummary = view.findViewById(R.id.cardTodaySummary);
+        if (cardHero != null) {
+            cardHero.startAnimation(android.view.animation.AnimationUtils.loadAnimation(requireContext(), R.anim.card_enter));
+        }
+        if (cardSummary != null) {
+            android.view.animation.Animation animation = android.view.animation.AnimationUtils.loadAnimation(requireContext(), R.anim.card_enter);
+            animation.setStartOffset(80);
+            cardSummary.startAnimation(animation);
+        }
     }
 
     private void observeViewModel() {
         viewModel.getUserProfile().observe(getViewLifecycleOwner(), this::updateProfileUI);
         viewModel.getDecisionScore().observe(getViewLifecycleOwner(), score -> {
-            tvDecisionScore.setText(score + "%");
+            tvDecisionScore.setText(String.valueOf(score));
+            scoreRing.setProgress(score);
+            updateCoachMessage();
         });
         viewModel.getActivityCompletionRate().observe(getViewLifecycleOwner(), rate -> {
-            tvCompletionRate.setText(String.format("%.0f%%", rate));
+            activityRate = rate;
+            tvTodayRisky.setText(String.format(Locale.getDefault(), "%.0f%%", rate));
+            updateCoachMessage();
         });
-        viewModel.getTodayActivitiesCount().observe(getViewLifecycleOwner(), count -> {
-            tvTodayActivities.setText(count);
+        viewModel.getTodayCompletedActivities().observe(getViewLifecycleOwner(), count -> {
+            todayCompleted = count;
+            tvTodayCompleted.setText(String.valueOf(count));
+            updateCoachMessage();
         });
-        viewModel.getTodayDecisionsCount().observe(getViewLifecycleOwner(), count -> {
-            tvTodayDecisions.setText(String.valueOf(count));
+        viewModel.getTodayMissedActivities().observe(getViewLifecycleOwner(), count -> {
+            todayMissed = count;
+            tvTodayMissed.setText(String.valueOf(count));
+            updateCoachMessage();
         });
-        viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
-            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        viewModel.getTodayRiskyDecisions().observe(getViewLifecycleOwner(), count -> {
+            todayRisky = count;
+            tvTodayRisky.setText(String.valueOf(count));
+            updateCoachMessage();
         });
+        viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading ->
+                progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE)
+        );
         viewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
             if (error != null) {
                 Toast.makeText(getContext(), error, Toast.LENGTH_SHORT).show();
@@ -114,79 +165,62 @@ public class DashboardFragment extends Fragment {
     }
 
     private void updateProfileUI(UserProfile profile) {
-        if (profile == null) return;
+        if (profile == null) {
+            return;
+        }
 
-        tvLevelName.setText(profile.getLevelName());
-        tvLevelNumber.setText("Level " + profile.getCurrentLevel());
-        tvXPProgress.setText(profile.getCurrentXP() + " / " + profile.getXpToNextLevel() + " XP");
+        tvLevelBadge.setText(String.format(Locale.getDefault(), "LVL %d", profile.getCurrentLevel()));
+        tvXPProgress.setText(profile.getCurrentXP() + " / " + profile.getXpToNextLevel());
         progressXP.setProgress((int) profile.getProgressPercentage());
-        tvDisciplineStreak.setText(String.valueOf(profile.getDailyDisciplineStreak()));
-        tvMissedStreak.setText(String.valueOf(profile.getMissedDayStreak()));
+        tvDisciplineStreak.setText(String.format(Locale.getDefault(), "%d Day Streak", profile.getDailyDisciplineStreak()));
 
-        // Check for achievements
         if (achievementManager != null) {
             achievementManager.checkStreak(profile.getDailyDisciplineStreak());
             achievementManager.checkLevelUp(profile.getCurrentLevel());
         }
 
-        updateBehavioralInsight(profile);
-        updateWeeklyTrend(profile);
+        updateCoachMessage();
     }
 
-    private void updateBehavioralInsight(UserProfile profile) {
-        String insight;
-        int streak = profile.getDailyDisciplineStreak();
-        double decisionRate = profile.getDecisionQualityRate();
-        double activityRate = profile.getActivityCompletionRate();
-
-        if (streak >= 7) {
-            insight = "Amazing! You're on a " + streak + "-day discipline streak. Keep it up!";
-        } else if (streak >= 3) {
-            insight = "Good momentum! " + streak + " days of discipline. Build on this.";
-        } else if (decisionRate < 50 && activityRate < 50) {
-            insight = "Focus on improving both decisions and activities. Start small.";
-        } else if (decisionRate < 50) {
-            insight = "Your decision quality needs attention. Take more time before deciding.";
-        } else if (activityRate < 50) {
-            insight = "Activity completion is low. Start with smaller, achievable tasks.";
-        } else {
-            insight = "You're making progress. Track consistently to see improvement.";
+    private String resolveGreeting() {
+        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+        if (hour < 12) {
+            return "Welcome back";
         }
-
-        tvBehavioralInsight.setText(insight);
+        if (hour < 18) {
+            return "Back at it";
+        }
+        return "Keep your edge";
     }
 
-    private void updateWeeklyTrend(UserProfile profile) {
-        // Simple weekly trend visualization based on streak
-        // In a real implementation, this would pull actual daily data from the repository
-        int streak = profile.getDailyDisciplineStreak();
-        TextView[] dayViews = {tvDay7, tvDay6, tvDay5, tvDay4, tvDay3, tvDay2, tvDay1};
-        
-        // Fill recent days with success indicators based on streak
-        for (int i = 0; i < dayViews.length; i++) {
-            if (i < streak && streak > 0) {
-                dayViews[i].setText("✓");
-                dayViews[i].setTextColor(ContextCompat.getColor(requireContext(), R.color.success));
-            } else {
-                dayViews[i].setText("•");
-                dayViews[i].setTextColor(ContextCompat.getColor(requireContext(), R.color.text_tertiary));
-            }
+    private String resolveStreakWarning(UserProfile profile) {
+        if (profile.getDailyDisciplineStreak() >= 7) {
+            return "Locked in. Protect the streak.";
+        }
+        if (profile.getMissedDayStreak() > 0) {
+            return "You are close to breaking momentum.";
+        }
+        return "Momentum is fragile. Show up today.";
+    }
+
+    private void updateCoachMessage() {
+        String message;
+
+        if (todayMissed > 0 && todayCompleted == 0) {
+            message = "You already slipped today. Recover with one clean action now.";
+        } else if (todayRisky > 0) {
+            message = "Your risky choices are clustering. Slow down before the next one.";
+        } else if (todayCompleted >= 3 && activityRate >= 70) {
+            message = "Today feels disciplined. Keep the pressure on.";
+        } else if (TextUtils.isEmpty(tvDecisionScore.getText()) || "0".contentEquals(tvDecisionScore.getText())) {
+            message = "No pattern yet. Start tracking honestly and the signal will show up.";
+        } else {
+            message = "You are one deliberate action away from control.";
         }
 
-        // Update summary
-        if (streak >= 7) {
-            tvWeeklySummary.setText("Perfect week!");
-            tvWeeklySummary.setTextColor(ContextCompat.getColor(requireContext(), R.color.success));
-        } else if (streak >= 5) {
-            tvWeeklySummary.setText("Great progress");
-            tvWeeklySummary.setTextColor(ContextCompat.getColor(requireContext(), R.color.success));
-        } else if (streak >= 3) {
-            tvWeeklySummary.setText("Building momentum");
-            tvWeeklySummary.setTextColor(ContextCompat.getColor(requireContext(), R.color.warning));
-        } else {
-            tvWeeklySummary.setText("Start today");
-            tvWeeklySummary.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary));
-        }
+        tvCoachMessage.setText(message);
+        tvStreakWarning.setText("LIVE SIGNAL");
+        tvScoreTrend.setText(buildTrendMessage());
     }
 
     @Override
@@ -195,5 +229,55 @@ public class DashboardFragment extends Fragment {
         if (viewModel != null) {
             viewModel.loadDashboardData();
         }
+    }
+
+    private String resolveProfileName() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            return "Operator";
+        }
+        if (!TextUtils.isEmpty(user.getDisplayName())) {
+            return user.getDisplayName();
+        }
+        String email = user.getEmail();
+        if (TextUtils.isEmpty(email)) {
+            return "Operator";
+        }
+        String local = email.split("@")[0].replace('.', ' ').replace('_', ' ').trim();
+        if (local.isEmpty()) {
+            return "Operator";
+        }
+        String[] parts = local.split("\\s+");
+        StringBuilder builder = new StringBuilder();
+        for (String part : parts) {
+            if (part.isEmpty()) {
+                continue;
+            }
+            builder.append(Character.toUpperCase(part.charAt(0)));
+            if (part.length() > 1) {
+                builder.append(part.substring(1));
+            }
+            builder.append(' ');
+        }
+        return builder.toString().trim();
+    }
+
+    private String buildTrendMessage() {
+        int delta = todayCompleted - todayRisky - todayMissed;
+        if (delta > 0) {
+            return String.format(Locale.getDefault(), "+%d today", delta);
+        }
+        if (todayRisky > 0 || todayMissed > 0) {
+            return "Under pressure";
+        }
+        return "Signal forming";
+    }
+
+    private void openFragment(Fragment fragment) {
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainer, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 }

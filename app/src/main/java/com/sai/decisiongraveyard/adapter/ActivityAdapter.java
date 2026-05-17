@@ -36,9 +36,9 @@ public class ActivityAdapter extends ListAdapter<Activity, ActivityAdapter.Activ
 
             @Override
             public boolean areContentsTheSame(@NonNull Activity oldItem, @NonNull Activity newItem) {
-                return oldItem.isCompleted() == newItem.isCompleted() &&
-                        oldItem.getScheduledTime() == newItem.getScheduledTime() &&
-                        oldItem.getTitle().equals(newItem.getTitle());
+                return oldItem.isCompleted() == newItem.isCompleted()
+                        && oldItem.getScheduledTime() == newItem.getScheduledTime()
+                        && oldItem.getTitle().equals(newItem.getTitle());
             }
         });
         this.listener = listener;
@@ -54,12 +54,12 @@ public class ActivityAdapter extends ListAdapter<Activity, ActivityAdapter.Activ
 
     @Override
     public void onBindViewHolder(@NonNull ActivityViewHolder holder, int position) {
-        Activity activity = getItem(position);
-        holder.bind(activity, listener);
+        holder.bind(getItem(position), listener);
     }
 
     static class ActivityViewHolder extends RecyclerView.ViewHolder {
         private final MaterialCardView cardActivity;
+        private final View viewStatusStrip;
         private final TextView tvTitle;
         private final TextView tvCategory;
         private final TextView tvScheduledTime;
@@ -67,9 +67,10 @@ public class ActivityAdapter extends ListAdapter<Activity, ActivityAdapter.Activ
         private final Button btnComplete;
         private final Button btnDelete;
 
-        public ActivityViewHolder(@NonNull View itemView) {
+        ActivityViewHolder(@NonNull View itemView) {
             super(itemView);
             cardActivity = itemView.findViewById(R.id.cardActivity);
+            viewStatusStrip = itemView.findViewById(R.id.viewStatusStrip);
             tvTitle = itemView.findViewById(R.id.tvTitle);
             tvCategory = itemView.findViewById(R.id.tvCategory);
             tvScheduledTime = itemView.findViewById(R.id.tvScheduledTime);
@@ -78,41 +79,48 @@ public class ActivityAdapter extends ListAdapter<Activity, ActivityAdapter.Activ
             btnDelete = itemView.findViewById(R.id.btnDelete);
         }
 
-        public void bind(Activity activity, OnActivityClickListener listener) {
+        void bind(Activity activity, OnActivityClickListener listener) {
             tvTitle.setText(activity.getTitle());
+
             String category = activity.getCategory();
             if (category == null || category.trim().isEmpty()) {
                 tvCategory.setText("General");
             } else {
                 tvCategory.setText(category.substring(0, 1).toUpperCase() + category.substring(1));
             }
-            tvScheduledTime.setText("Scheduled: " + DateUtils.formatDateTime(activity.getScheduledTime()));
+
+            tvScheduledTime.setText(DateUtils.formatDateTime(activity.getScheduledTime()));
 
             String status = activity.getStatus();
             tvStatus.setText(status.substring(0, 1).toUpperCase() + status.substring(1));
 
             int statusColor;
-            int cardStrokeColor;
+            int statusBackground;
             switch (status) {
                 case "completed":
                     statusColor = R.color.success;
-                    cardStrokeColor = R.color.success;
+                    statusBackground = R.drawable.bg_badge_success;
                     btnComplete.setVisibility(View.GONE);
                     break;
                 case "missed":
                     statusColor = R.color.danger;
-                    cardStrokeColor = R.color.danger;
+                    statusBackground = R.drawable.bg_badge_danger;
                     btnComplete.setVisibility(View.VISIBLE);
+                    btnComplete.setText("Recover");
                     break;
                 default:
                     statusColor = R.color.warning;
-                    cardStrokeColor = R.color.warning;
+                    statusBackground = R.drawable.bg_badge_warning;
                     btnComplete.setVisibility(View.VISIBLE);
+                    btnComplete.setText("Complete");
                     break;
             }
 
-            tvStatus.setTextColor(ContextCompat.getColor(itemView.getContext(), statusColor));
-            cardActivity.setStrokeColor(ContextCompat.getColor(itemView.getContext(), cardStrokeColor));
+            int resolvedColor = ContextCompat.getColor(itemView.getContext(), statusColor);
+            tvStatus.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.text_primary));
+            tvStatus.setBackgroundResource(statusBackground);
+            viewStatusStrip.setBackgroundColor(resolvedColor);
+            cardActivity.setStrokeColor(ContextCompat.getColor(itemView.getContext(), R.color.divider));
 
             btnComplete.setOnClickListener(v -> listener.onCompleteClicked(activity));
             btnDelete.setOnClickListener(v -> listener.onDeleteClicked(activity));

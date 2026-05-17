@@ -29,6 +29,7 @@ public class ActivityViewModel extends AndroidViewModel {
 
     private final ActivityRepository repository;
     private final MutableLiveData<SaveState> saveState = new MutableLiveData<>();
+    private final MutableLiveData<SaveState> actionState = new MutableLiveData<>();
     private final MutableLiveData<List<Activity>> activities = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<String> statusFilter = new MutableLiveData<>("all");
     private final List<Activity> cachedActivities = new ArrayList<>();
@@ -46,6 +47,10 @@ public class ActivityViewModel extends AndroidViewModel {
 
     public LiveData<List<Activity>> getActivities() {
         return activities;
+    }
+
+    public LiveData<SaveState> getActionState() {
+        return actionState;
     }
 
     public LiveData<String> getStatusFilter() {
@@ -148,11 +153,27 @@ public class ActivityViewModel extends AndroidViewModel {
             @Override
             public void onSuccess() {
                 android.util.Log.d("ActivityViewModel", "Activity marked as completed: " + activityId);
+                boolean updated = false;
+                for (Activity activity : cachedActivities) {
+                    if (activity.getActivityId() == activityId) {
+                        activity.setCompleted(true);
+                        activity.setCompletedTime(System.currentTimeMillis());
+                        updated = true;
+                        break;
+                    }
+                }
+                if (updated) {
+                    postFilteredActivities();
+                } else {
+                    refresh();
+                }
+                actionState.postValue(new SaveState(true, "Activity marked as completed"));
             }
 
             @Override
             public void onError(String error) {
                 android.util.Log.e("ActivityViewModel", "Error marking as completed: " + error);
+                actionState.postValue(new SaveState(false, error != null ? error : "Couldn't mark activity as completed."));
             }
         });
     }
@@ -162,17 +183,25 @@ public class ActivityViewModel extends AndroidViewModel {
             @Override
             public void onSuccess() {
                 android.util.Log.d("ActivityViewModel", "Activity deleted: " + activityId);
+                cachedActivities.removeIf(activity -> activity.getActivityId() == activityId);
+                postFilteredActivities();
+                actionState.postValue(new SaveState(true, "Activity deleted"));
             }
 
             @Override
             public void onError(String error) {
                 android.util.Log.e("ActivityViewModel", "Error deleting activity: " + error);
+                actionState.postValue(new SaveState(false, error != null ? error : "Couldn't delete activity."));
             }
         });
     }
 
     public void clearSaveState() {
         saveState.setValue(null);
+    }
+
+    public void clearActionState() {
+        actionState.setValue(null);
     }
 
     @Override

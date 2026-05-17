@@ -2,46 +2,68 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@android:color/transparent">
+    android:layout_height="match_parent">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="16dp">
+        android:paddingStart="20dp"
+        android:paddingTop="28dp"
+        android:paddingEnd="20dp">
 
         <TextView
             android:id="@+id/tvHomeTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="My Decisions"
+            android:text="Decisions"
             android:textColor="@color/text_primary"
-            android:textSize="32sp"
-            android:fontFamily="@font/inter_bold"
+            android:textSize="30sp"
+            android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tvHomeHeadline"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="0 decisions total"
+            android:layout_marginTop="8dp"
+            android:text="Review the choices that are shaping your behavior."
             android:textColor="@color/text_secondary"
             android:textSize="14sp"
-            android:fontFamily="@font/inter_medium"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvHomeTitle" />
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutSearchStub"
+            style="@style/Widget.DecisionGraveyard.TextInput"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="Search decisions..."
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvHomeHeadline">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:enabled="false"
+                android:focusable="false"
+                android:paddingVertical="12dp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/chipGroupStatus"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            app:singleSelection="true"
+            android:layout_marginTop="18dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/layoutSearchStub"
             app:selectionRequired="true"
             app:singleLine="true"
-            app:layout_constraintTop_toBottomOf="@id/tvHomeHeadline">
+            app:singleSelection="true">
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipAll"
@@ -56,50 +78,55 @@
                 style="@style/Widget.DecisionGraveyard.Chip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Ready" />
+                android:text="Pending" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipReviewed"
                 style="@style/Widget.DecisionGraveyard.Chip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Reviewed" />
+                android:text="Evaluated" />
         </com.google.android.material.chip.ChipGroup>
 
         <TextView
             android:id="@+id/tvEmptyState"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="28dp"
             android:background="@drawable/bg_surface_card"
             android:gravity="center"
             android:padding="32dp"
-            android:text="@string/empty_home_body"
+            android:text="No decisions yet. Start by adding one."
             android:textColor="@color/text_secondary"
             android:textSize="16sp"
             android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/chipGroupStatus" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerDecisions"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="14dp"
             android:clipToPadding="false"
-            android:paddingBottom="100dp"
+            android:paddingBottom="112dp"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/chipGroupStatus" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabQuickAction"
         style="@style/Widget.DecisionGraveyard.FAB"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="24dp"
-        android:text="@string/new_decision"
-        app:icon="@drawable/ic_add" />
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="104dp"
+        android:contentDescription="@string/new_decision"
+        app:srcCompat="@drawable/ic_add" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

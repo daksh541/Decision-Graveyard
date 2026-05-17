@@ -13,7 +13,10 @@ import com.sai.decisiongraveyard.R;
 import com.sai.decisiongraveyard.model.TimelineEvent;
 import com.sai.decisiongraveyard.repository.TimelineRepository;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class TimelineDayAdapter extends RecyclerView.Adapter<TimelineDayAdapter.TimelineDayViewHolder> {
 
@@ -38,8 +41,7 @@ public class TimelineDayAdapter extends RecyclerView.Adapter<TimelineDayAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull TimelineDayViewHolder holder, int position) {
-        TimelineRepository.TimelineDay day = days.get(position);
-        holder.bind(day);
+        holder.bind(days.get(position));
     }
 
     @Override
@@ -49,48 +51,39 @@ public class TimelineDayAdapter extends RecyclerView.Adapter<TimelineDayAdapter.
 
     static class TimelineDayViewHolder extends RecyclerView.ViewHolder {
 
-        private TextView tvDayDate;
-        private TextView tvDayScore;
-        private TextView tvDecisionCount;
-        private TextView tvActivityCount;
-        private TextView tvCompletionRate;
-        private RecyclerView recyclerViewEvents;
-        private TimelineEventAdapter eventAdapter;
+        private final TextView tvDayDate;
+        private final RecyclerView recyclerViewEvents;
+        private final TimelineEventAdapter eventAdapter;
+        private final SimpleDateFormat monthDayFormat = new SimpleDateFormat("MMM dd", Locale.getDefault());
+        private final SimpleDateFormat fullFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
 
-        public TimelineDayViewHolder(@NonNull View itemView) {
+        TimelineDayViewHolder(@NonNull View itemView) {
             super(itemView);
             tvDayDate = itemView.findViewById(R.id.tvDayDate);
-            tvDayScore = itemView.findViewById(R.id.tvDayScore);
-            tvDecisionCount = itemView.findViewById(R.id.tvDecisionCount);
-            tvActivityCount = itemView.findViewById(R.id.tvActivityCount);
-            tvCompletionRate = itemView.findViewById(R.id.tvCompletionRate);
             recyclerViewEvents = itemView.findViewById(R.id.recyclerViewEvents);
-            
+
             recyclerViewEvents.setLayoutManager(new LinearLayoutManager(itemView.getContext()));
             eventAdapter = new TimelineEventAdapter();
             recyclerViewEvents.setAdapter(eventAdapter);
         }
 
-        public void bind(TimelineRepository.TimelineDay day) {
-            tvDayDate.setText(day.getRelativeDate());
-            
-            // Set score with color
-            tvDayScore.setText("Score: " + day.score);
-            if (day.score >= 0) {
-                tvDayScore.setTextColor(itemView.getContext().getColor(R.color.success));
-            } else {
-                tvDayScore.setTextColor(itemView.getContext().getColor(R.color.danger));
-            }
-            
-            tvDecisionCount.setText(String.valueOf(day.decisionCount));
-            tvActivityCount.setText(String.valueOf(day.activityCount));
-            tvCompletionRate.setText(String.format("%.0f%%", day.completionRate));
-            
-            // Sort events by timestamp
+        void bind(TimelineRepository.TimelineDay day) {
+            tvDayDate.setText(buildDayLabel(day));
+
             List<TimelineEvent> sortedEvents = day.events;
             sortedEvents.sort((a, b) -> Long.compare(b.getTimestamp(), a.getTimestamp()));
-            
             eventAdapter.updateEvents(sortedEvents);
+        }
+
+        private String buildDayLabel(TimelineRepository.TimelineDay day) {
+            String relative = day.getRelativeDate();
+            if ("Today".equals(relative)) {
+                return "Today";
+            }
+            if ("Yesterday".equals(relative)) {
+                return "Yesterday, " + monthDayFormat.format(new Date(day.timestamp));
+            }
+            return fullFormat.format(new Date(day.timestamp));
         }
     }
 }

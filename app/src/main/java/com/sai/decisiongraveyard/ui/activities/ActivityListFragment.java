@@ -2,7 +2,6 @@ package com.sai.decisiongraveyard.ui.activities;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,8 +14,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.sai.decisiongraveyard.R;
 import com.sai.decisiongraveyard.adapter.ActivityAdapter;
 import com.sai.decisiongraveyard.model.Activity;
@@ -33,7 +32,7 @@ public class ActivityListFragment extends Fragment {
     private TextView tvMissedCount;
     private TextView tvEmptyState;
     private LinearLayout layoutStats;
-    private Button btnAddActivity;
+    private FloatingActionButton btnAddActivity;
 
     public ActivityListFragment() {
         super(R.layout.fragment_activity_list);
@@ -65,19 +64,16 @@ public class ActivityListFragment extends Fragment {
         activityAdapter = new ActivityAdapter(new ActivityAdapter.OnActivityClickListener() {
             @Override
             public void onActivityClicked(Activity activity) {
-                // Could show details dialog
             }
 
             @Override
             public void onCompleteClicked(Activity activity) {
                 viewModel.markAsCompleted(activity.getActivityId());
-                Toast.makeText(requireContext(), "Activity marked as completed", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onDeleteClicked(Activity activity) {
                 viewModel.deleteActivity(activity.getActivityId());
-                Toast.makeText(requireContext(), "Activity deleted", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -98,7 +94,7 @@ public class ActivityListFragment extends Fragment {
 
         btnAddActivity.setOnClickListener(v -> {
             try {
-                androidx.appcompat.app.AppCompatActivity activity = 
+                androidx.appcompat.app.AppCompatActivity activity =
                         (androidx.appcompat.app.AppCompatActivity) requireActivity();
                 activity.getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragmentContainer, new AddActivityFragment())
@@ -112,9 +108,18 @@ public class ActivityListFragment extends Fragment {
         viewModel.getActivities().observe(getViewLifecycleOwner(), activities -> {
             updateStats(activities);
             activityAdapter.submitList(activities);
-            tvEmptyState.setVisibility(activities.isEmpty() ? View.VISIBLE : View.GONE);
-            recyclerView.setVisibility(activities.isEmpty() ? View.GONE : View.VISIBLE);
-            layoutStats.setVisibility(activities.isEmpty() ? View.GONE : View.VISIBLE);
+            boolean isEmpty = activities.isEmpty();
+            tvEmptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+            recyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+            layoutStats.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+        });
+
+        viewModel.getActionState().observe(getViewLifecycleOwner(), state -> {
+            if (state == null) {
+                return;
+            }
+            Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show();
+            viewModel.clearActionState();
         });
     }
 
@@ -125,7 +130,9 @@ public class ActivityListFragment extends Fragment {
     }
 
     private void updateStats(java.util.List<Activity> activities) {
-        int pending = 0, completed = 0, missed = 0;
+        int pending = 0;
+        int completed = 0;
+        int missed = 0;
 
         for (Activity activity : activities) {
             String status = activity.getStatus();
@@ -142,15 +149,17 @@ public class ActivityListFragment extends Fragment {
             }
         }
 
-        tvActivityHeadline.setText(activities.size() + " activities tracked");
+        if (activities.isEmpty()) {
+            tvActivityHeadline.setText("No activities today. Stay disciplined.");
+        } else if (missed > 0) {
+            tvActivityHeadline.setText("You have unfinished business today.");
+        } else {
+            tvActivityHeadline.setText("What should you do now?");
+        }
+
         tvPendingCount.setText(String.valueOf(pending));
         tvCompletedCount.setText(String.valueOf(completed));
         tvMissedCount.setText(String.valueOf(missed));
-
-        if (missed > 0) {
-            tvMissedCount.setTextColor(ContextCompat.getColor(requireContext(), R.color.danger));
-        } else {
-            tvMissedCount.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary));
-        }
+        tvMissedCount.setTextColor(ContextCompat.getColor(requireContext(), missed > 0 ? R.color.danger : R.color.text_primary));
     }
 }
