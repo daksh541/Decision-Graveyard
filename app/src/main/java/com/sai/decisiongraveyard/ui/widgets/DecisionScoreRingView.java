@@ -48,6 +48,9 @@ public class DecisionScoreRingView extends View {
         trackColor = ContextCompat.getColor(context, R.color.surface_variant);
         glowColor = ContextCompat.getColor(context, R.color.primary);
 
+        // BlurMaskFilter requires a software layer when hardware acceleration is enabled.
+        setLayerType(LAYER_TYPE_SOFTWARE, null);
+
         trackPaint.setStyle(Paint.Style.STROKE);
         trackPaint.setStrokeCap(Paint.Cap.ROUND);
 
