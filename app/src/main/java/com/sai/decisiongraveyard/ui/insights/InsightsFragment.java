@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,12 +16,17 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.sai.decisiongraveyard.R;
 import com.sai.decisiongraveyard.adapter.InsightAdapter;
+import com.sai.decisiongraveyard.model.AiInsightReport;
 import com.sai.decisiongraveyard.model.AnalyticsSnapshot;
 import com.sai.decisiongraveyard.repository.DecisionRepository;
+import com.sai.decisiongraveyard.ui.widgets.HabitHeatmapView;
+import com.sai.decisiongraveyard.ui.widgets.RiskMeterView;
+import com.sai.decisiongraveyard.ui.widgets.TrendSparklineView;
 import com.sai.decisiongraveyard.viewmodel.InsightsViewModel;
 
 import java.util.ArrayList;
@@ -32,10 +38,14 @@ public class InsightsFragment extends Fragment {
     private InsightAdapter insightAdapter;
 
     private ProgressBar progressQuality;
+    private ProgressBar progressBar;
     private TextView tvQualityScore;
     private TextView tvQualitySummary;
     private TextView tvIdentityLabel;
-    private SwitchMaterial switchBrutalMode;
+    private TextView tvRiskValue;
+    private TextView tvWeeklyReport;
+    private TextView tvBrainPattern;
+    private TextView tvQuote;
     private TextView tvGoodPct;
     private TextView tvBadPct;
     private TextView tvNeutralPct;
@@ -49,6 +59,11 @@ public class InsightsFragment extends Fragment {
     private MaterialCardView cardStreak;
     private LinearLayout patternRepetitionContainer;
     private LinearLayout actionableInsightContainer;
+    private SwitchMaterial switchBrutalMode;
+    private TrendSparklineView trendSparklineView;
+    private HabitHeatmapView heatmapView;
+    private RiskMeterView riskMeterView;
+    private MaterialButton btnRetry;
 
     public InsightsFragment() {
         super(R.layout.fragment_insights);
@@ -74,11 +89,44 @@ public class InsightsFragment extends Fragment {
             }
         });
 
+        bindViews(view);
+        setupRecyclerView(view);
+
+        switchBrutalMode.setOnCheckedChangeListener((buttonView, isChecked) -> viewModel.setBrutalMode(isChecked));
+        btnRetry.setOnClickListener(v -> viewModel.refresh());
+
+        viewModel.getAnalyticsSnapshot().observe(getViewLifecycleOwner(), this::renderInsights);
+        viewModel.getStreakCount().observe(getViewLifecycleOwner(), streak -> {
+            tvStreakCount.setText(String.valueOf(streak));
+            cardStreak.setVisibility(streak > 1 ? View.VISIBLE : View.GONE);
+        });
+        viewModel.getBadStreakCount().observe(getViewLifecycleOwner(), streak -> {
+            tvBadStreakCount.setText(String.valueOf(streak));
+            cardBadStreak.setVisibility(streak >= 2 ? View.VISIBLE : View.GONE);
+        });
+        viewModel.getBrutalMode().observe(getViewLifecycleOwner(), brutal -> {
+            if (brutal != null && switchBrutalMode.isChecked() != brutal) {
+                switchBrutalMode.setChecked(brutal);
+            }
+        });
+        viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE));
+        viewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
+            if (error != null && !error.trim().isEmpty()) {
+                Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void bindViews(View view) {
         progressQuality = view.findViewById(R.id.progressQuality);
+        progressBar = view.findViewById(R.id.progressBar);
         tvQualityScore = view.findViewById(R.id.tvQualityScore);
         tvQualitySummary = view.findViewById(R.id.tvQualitySummary);
         tvIdentityLabel = view.findViewById(R.id.tvIdentityLabel);
-        switchBrutalMode = view.findViewById(R.id.switchBrutalMode);
+        tvRiskValue = view.findViewById(R.id.tvRiskValue);
+        tvWeeklyReport = view.findViewById(R.id.tvWeeklyReport);
+        tvBrainPattern = view.findViewById(R.id.tvBrainPattern);
+        tvQuote = view.findViewById(R.id.tvQuote);
         tvGoodPct = view.findViewById(R.id.tvGoodPct);
         tvBadPct = view.findViewById(R.id.tvBadPct);
         tvNeutralPct = view.findViewById(R.id.tvNeutralPct);
@@ -92,28 +140,18 @@ public class InsightsFragment extends Fragment {
         cardStreak = view.findViewById(R.id.cardStreak);
         patternRepetitionContainer = view.findViewById(R.id.patternRepetitionContainer);
         actionableInsightContainer = view.findViewById(R.id.actionableInsightContainer);
-        RecyclerView recyclerInsights = view.findViewById(R.id.recyclerInsights);
+        switchBrutalMode = view.findViewById(R.id.switchBrutalMode);
+        trendSparklineView = view.findViewById(R.id.trendSparklineView);
+        heatmapView = view.findViewById(R.id.heatmapView);
+        riskMeterView = view.findViewById(R.id.riskMeterView);
+        btnRetry = view.findViewById(R.id.btnRetry);
+    }
 
+    private void setupRecyclerView(View view) {
+        RecyclerView recyclerInsights = view.findViewById(R.id.recyclerInsights);
         insightAdapter = new InsightAdapter();
         recyclerInsights.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerInsights.setAdapter(insightAdapter);
-
-        switchBrutalMode.setOnCheckedChangeListener((buttonView, isChecked) -> viewModel.setBrutalMode(isChecked));
-
-        viewModel.getAnalyticsSnapshot().observe(getViewLifecycleOwner(), this::renderInsights);
-        viewModel.getStreakCount().observe(getViewLifecycleOwner(), streak -> {
-            tvStreakCount.setText(String.valueOf(streak));
-            cardStreak.setVisibility(streak > 1 ? View.VISIBLE : View.GONE);
-        });
-        viewModel.getBadStreakCount().observe(getViewLifecycleOwner(), streak -> {
-            tvBadStreakCount.setText(String.valueOf(streak));
-            cardBadStreak.setVisibility(streak >= 2 ? View.VISIBLE : View.GONE);
-        });
-        viewModel.getBrutalMode().observe(getViewLifecycleOwner(), brutal -> {
-            if (brutal != null) {
-                switchBrutalMode.setChecked(brutal);
-            }
-        });
     }
 
     @Override
@@ -130,7 +168,8 @@ public class InsightsFragment extends Fragment {
         boolean empty = snapshot.isEmpty();
         cardEmptyInsights.setVisibility(empty ? View.VISIBLE : View.GONE);
 
-        int qualityScore = snapshot.getQualityScore();
+        AiInsightReport report = snapshot.getAiInsightReport();
+        int qualityScore = report.getBehaviorScore() > 0 ? report.getBehaviorScore() : snapshot.getQualityScore();
         animateProgress(progressQuality, qualityScore);
         tvQualityScore.setText(String.valueOf(qualityScore));
         tvGoodPct.setText(snapshot.getGoodPercent() + "%");
@@ -140,12 +179,16 @@ public class InsightsFragment extends Fragment {
         tvConsequenceMessage.setText(snapshot.getConsequenceMessage().isEmpty()
                 ? "Your behavior trend is still forming."
                 : snapshot.getConsequenceMessage());
-
-        cardConsequenceMeter.setVisibility(snapshot.getTotalEvaluated() > 0 ? View.VISIBLE : View.GONE);
-        tvIdentityLabel.setText(resolveZoneLabel(snapshot));
-        tvIdentityLabel.setTextColor(ContextCompat.getColor(requireContext(), resolveIdentityColor(snapshot)));
-        tvQualitySummary.setText(resolveSummary(snapshot));
-        tvConsequencePoints.setTextColor(ContextCompat.getColor(requireContext(), resolveConsequenceColor(snapshot.getConsequencePoints())));
+        tvIdentityLabel.setText(resolveZoneLabel(qualityScore));
+        tvIdentityLabel.setTextColor(ContextCompat.getColor(requireContext(), resolveIdentityColor(qualityScore)));
+        tvQualitySummary.setText(report.getSummary().isEmpty() ? resolveSummary(snapshot) : report.getSummary());
+        tvWeeklyReport.setText(report.getWeeklyReport().isEmpty() ? "No weekly report yet." : report.getWeeklyReport());
+        tvBrainPattern.setText(report.getBrainPattern().isEmpty() ? "Your dominant pattern will appear once more reviews land." : report.getBrainPattern());
+        tvQuote.setText(report.getQuote().isEmpty() ? "Consistency sharpens clarity." : report.getQuote());
+        tvRiskValue.setText(String.format("%d%%", report.getRiskScore()));
+        riskMeterView.setRiskValue(report.getRiskScore());
+        trendSparklineView.setValues(snapshot.getWeeklyQualityTrend());
+        heatmapView.setCells(snapshot.getHeatmapCells());
 
         patternRepetitionContainer.removeAllViews();
         actionableInsightContainer.removeAllViews();
@@ -154,16 +197,24 @@ public class InsightsFragment extends Fragment {
             patternRepetitionContainer.addView(buildMessageCard(pattern.getMessage(), R.color.danger_container, R.color.danger));
         }
 
-        for (String insight : snapshot.getActionableInsights()) {
+        for (String insight : report.getRecommendations()) {
             actionableInsightContainer.addView(buildMessageCard(insight, R.color.success_container, R.color.success));
+        }
+        if (report.getRecommendations().isEmpty()) {
+            for (String insight : snapshot.getActionableInsights()) {
+                actionableInsightContainer.addView(buildMessageCard(insight, R.color.success_container, R.color.success));
+            }
         }
 
         List<String> feed = new ArrayList<>();
-        feed.addAll(snapshot.getGeneratedInsights());
-        if (feed.isEmpty() && !snapshot.getActionableInsights().isEmpty()) {
-            feed.addAll(snapshot.getActionableInsights());
+        feed.addAll(report.getInsightCards());
+        feed.addAll(snapshot.getActivityInsights());
+        if (feed.isEmpty()) {
+            feed.addAll(snapshot.getGeneratedInsights());
         }
         insightAdapter.submitList(feed);
+
+        cardConsequenceMeter.setVisibility(snapshot.getTotalEvaluated() > 0 ? View.VISIBLE : View.GONE);
     }
 
     private View buildMessageCard(String text, int backgroundColor, int accentColor) {
@@ -190,18 +241,17 @@ public class InsightsFragment extends Fragment {
         return card;
     }
 
-    private String resolveZoneLabel(AnalyticsSnapshot snapshot) {
-        int score = snapshot.getQualityScore();
+    private String resolveZoneLabel(int score) {
         if (score >= 80) {
-            return "You are in Discipline Zone";
+            return "Discipline zone";
         }
         if (score >= 60) {
-            return "You are in Stabilizing Zone";
+            return "Stabilizing zone";
         }
         if (score >= 40) {
-            return "You are in Inconsistent Zone";
+            return "Inconsistent zone";
         }
-        return "You are in Self-Sabotage Zone";
+        return "Self-sabotage zone";
     }
 
     private String resolveSummary(AnalyticsSnapshot snapshot) {
@@ -217,8 +267,7 @@ public class InsightsFragment extends Fragment {
         return snapshot.getTotalEvaluated() + " decisions evaluated. The signal is getting clearer.";
     }
 
-    private int resolveIdentityColor(AnalyticsSnapshot snapshot) {
-        int score = snapshot.getQualityScore();
+    private int resolveIdentityColor(int score) {
         if (score >= 80) {
             return R.color.success;
         }
@@ -229,16 +278,6 @@ public class InsightsFragment extends Fragment {
             return R.color.warning;
         }
         return R.color.danger;
-    }
-
-    private int resolveConsequenceColor(int points) {
-        if (points > 0) {
-            return R.color.success;
-        }
-        if (points < 0) {
-            return R.color.danger;
-        }
-        return R.color.text_primary;
     }
 
     private void animateProgress(ProgressBar progressBar, int target) {

@@ -9,6 +9,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -88,6 +89,10 @@ public class UserProfileRepository {
     public void updateUserProfile(UserProfile profile, ActionCallback callback) {
         String userId = requireUserId();
         profile.setUserId(userId);
+        if (profile.getCreatedAt() == null) {
+            profile.setCreatedAt(Timestamp.now());
+        }
+        profile.setUpdatedAt(Timestamp.now());
 
         profileDocument(userId)
                 .set(profile)

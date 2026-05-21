@@ -24,6 +24,8 @@ public class InsightsViewModel extends AndroidViewModel {
     private final MutableLiveData<Integer> streakCount = new MutableLiveData<>(0);
     private final MutableLiveData<Integer> badStreakCount = new MutableLiveData<>(0);
     private final MutableLiveData<Boolean> brutalMode = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
+    private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
 
     public InsightsViewModel(@NonNull Application application) {
         super(application);
@@ -46,19 +48,29 @@ public class InsightsViewModel extends AndroidViewModel {
         return brutalMode;
     }
 
+    public LiveData<Boolean> getIsLoading() {
+        return isLoading;
+    }
+
+    public LiveData<String> getErrorMessage() {
+        return errorMessage;
+    }
+
     public void setBrutalMode(boolean enabled) {
         brutalMode.setValue(enabled);
         refresh();
     }
 
     public void refresh() {
+        isLoading.postValue(true);
+        errorMessage.postValue(null);
         executorService.execute(() -> {
             try {
                 Boolean isBrutal = brutalMode.getValue();
                 analyticsSnapshot.postValue(repository.getAnalyticsSnapshot(isBrutal != null && isBrutal));
                 streakCount.postValue(calculateStreak());
                 badStreakCount.postValue(calculateBadStreak());
-            } catch (RuntimeException ignored) {
+            } catch (RuntimeException exception) {
                 analyticsSnapshot.postValue(new AnalyticsSnapshot(
                         0, 0, 0, 0, 0, 0, 0,
                         java.util.Collections.emptyList(),
@@ -66,6 +78,9 @@ public class InsightsViewModel extends AndroidViewModel {
                 ));
                 streakCount.postValue(0);
                 badStreakCount.postValue(0);
+                errorMessage.postValue(exception.getMessage() == null ? "Couldn't load insights." : exception.getMessage());
+            } finally {
+                isLoading.postValue(false);
             }
         });
     }

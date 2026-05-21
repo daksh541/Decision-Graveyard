@@ -5,6 +5,7 @@ import android.util.Log;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -75,6 +76,10 @@ public class UserPreferencesRepository {
     public void updateUserPreferences(UserPreferences preferences, ActionCallback callback) {
         String userId = requireUserId();
         preferences.setUserId(userId);
+        if (preferences.getCreatedAt() == null) {
+            preferences.setCreatedAt(Timestamp.now());
+        }
+        preferences.setUpdatedAt(Timestamp.now());
 
         preferencesDocument(userId)
                 .set(preferences)

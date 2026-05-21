@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.sai.decisiongraveyard.model.AnalyticsSnapshot;
 import com.sai.decisiongraveyard.model.DecisionRecord;
 import com.sai.decisiongraveyard.model.UserProfile;
 import com.sai.decisiongraveyard.repository.ActivityRepository;
@@ -29,6 +30,7 @@ public class DashboardViewModel extends AndroidViewModel {
     private final MutableLiveData<Integer> todayCompletedActivities = new MutableLiveData<>(0);
     private final MutableLiveData<Integer> todayMissedActivities = new MutableLiveData<>(0);
     private final MutableLiveData<Integer> todayRiskyDecisions = new MutableLiveData<>(0);
+    private final MutableLiveData<AnalyticsSnapshot> analyticsSnapshot = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
 
@@ -63,6 +65,10 @@ public class DashboardViewModel extends AndroidViewModel {
 
     public LiveData<Integer> getTodayRiskyDecisions() {
         return todayRiskyDecisions;
+    }
+
+    public LiveData<AnalyticsSnapshot> getAnalyticsSnapshot() {
+        return analyticsSnapshot;
     }
 
     public LiveData<Boolean> getIsLoading() {
@@ -126,6 +132,7 @@ public class DashboardViewModel extends AndroidViewModel {
                         riskyDecisionCount++;
                     }
                 }
+                analyticsSnapshot.postValue(decisionRepository.getAnalyticsSnapshot(false));
             } catch (Exception e) {
                 errorMessage.postValue("Error loading decisions: " + e.getMessage());
             } finally {

@@ -23,13 +23,16 @@ public class AnalyticsSnapshot {
     private final int completedActivities;
     private final int missedActivities;
     private final List<String> activityInsights;
+    private final AiInsightReport aiInsightReport;
+    private final List<HeatmapCell> heatmapCells;
+    private final List<Integer> weeklyQualityTrend;
 
     public AnalyticsSnapshot(int totalDecisions, int totalEvaluated, int goodCount, int badCount,
                              int neutralCount, int readyForReviewCount, int upcomingCount,
                              List<CategoryInsight> categoryInsights, List<String> generatedInsights) {
         this(totalDecisions, totalEvaluated, goodCount, badCount, neutralCount, readyForReviewCount,
                 upcomingCount, categoryInsights, generatedInsights, 0, new ArrayList<>(), new ArrayList<>(), 0, "",
-                0, 0, 0, new ArrayList<>());
+                0, 0, 0, new ArrayList<>(), AiInsightReport.empty(), new ArrayList<>(), new ArrayList<>());
     }
 
     public AnalyticsSnapshot(int totalDecisions, int totalEvaluated, int goodCount, int badCount,
@@ -39,7 +42,7 @@ public class AnalyticsSnapshot {
                              List<PatternRepetition> patternRepetitions) {
         this(totalDecisions, totalEvaluated, goodCount, badCount, neutralCount, readyForReviewCount,
                 upcomingCount, categoryInsights, generatedInsights, intensityLevel, actionableInsights,
-                patternRepetitions, 0, "", 0, 0, 0, new ArrayList<>());
+                patternRepetitions, 0, "", 0, 0, 0, new ArrayList<>(), AiInsightReport.empty(), new ArrayList<>(), new ArrayList<>());
     }
 
     public AnalyticsSnapshot(int totalDecisions, int totalEvaluated, int goodCount, int badCount,
@@ -50,7 +53,7 @@ public class AnalyticsSnapshot {
                              String consequenceMessage) {
         this(totalDecisions, totalEvaluated, goodCount, badCount, neutralCount, readyForReviewCount,
                 upcomingCount, categoryInsights, generatedInsights, intensityLevel, actionableInsights,
-                patternRepetitions, consequencePoints, consequenceMessage, 0, 0, 0, new ArrayList<>());
+                patternRepetitions, consequencePoints, consequenceMessage, 0, 0, 0, new ArrayList<>(), AiInsightReport.empty(), new ArrayList<>(), new ArrayList<>());
     }
 
     public AnalyticsSnapshot(int totalDecisions, int totalEvaluated, int goodCount, int badCount,
@@ -59,7 +62,9 @@ public class AnalyticsSnapshot {
                              int intensityLevel, List<String> actionableInsights,
                              List<PatternRepetition> patternRepetitions, int consequencePoints,
                              String consequenceMessage, int totalActivities, int completedActivities,
-                             int missedActivities, List<String> activityInsights) {
+                             int missedActivities, List<String> activityInsights,
+                             AiInsightReport aiInsightReport, List<HeatmapCell> heatmapCells,
+                             List<Integer> weeklyQualityTrend) {
         this.totalDecisions = totalDecisions;
         this.totalEvaluated = totalEvaluated;
         this.goodCount = goodCount;
@@ -78,6 +83,9 @@ public class AnalyticsSnapshot {
         this.completedActivities = completedActivities;
         this.missedActivities = missedActivities;
         this.activityInsights = activityInsights;
+        this.aiInsightReport = aiInsightReport == null ? AiInsightReport.empty() : aiInsightReport;
+        this.heatmapCells = heatmapCells == null ? new ArrayList<>() : heatmapCells;
+        this.weeklyQualityTrend = weeklyQualityTrend == null ? new ArrayList<>() : weeklyQualityTrend;
     }
 
     public int getTotalDecisions() {
@@ -150,6 +158,18 @@ public class AnalyticsSnapshot {
 
     public List<String> getActivityInsights() {
         return activityInsights;
+    }
+
+    public AiInsightReport getAiInsightReport() {
+        return aiInsightReport;
+    }
+
+    public List<HeatmapCell> getHeatmapCells() {
+        return heatmapCells;
+    }
+
+    public List<Integer> getWeeklyQualityTrend() {
+        return weeklyQualityTrend;
     }
 
     public boolean isEmpty() {

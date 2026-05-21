@@ -105,52 +105,59 @@ public class ActivityRepository {
     public void markAsCompleted(long activityId, ActionCallback callback) {
         try {
             Log.d(TAG, "markAsCompleted called for activityId: " + activityId);
-            
-            // First, get the activity to determine its scheduled day
-            Activity activity = getActivity(activityId);
-            if (activity == null) {
-                callback.onError("Activity not found");
-                return;
-            }
-            
-            long scheduledTime = activity.getScheduledTime();
-            long dayStart = getDayStart(scheduledTime);
-            long dayEnd = getDayEnd(scheduledTime);
-            
-            Map<String, Object> updates = new java.util.LinkedHashMap<>();
-            updates.put("completed", true);
-            updates.put("completedTime", System.currentTimeMillis());
 
-            activityDocument(activityId).update(updates)
-                    .addOnSuccessListener(aVoid -> {
-                        Log.d(TAG, "Activity marked as completed: " + activityId);
-                        dataChangedTrigger.postValue(activityId);
-                        
-                        // Cancel pre-miss reminder since activity is completed
-                        PreMissReminderScheduler.cancelPreMissReminder(context, activityId);
-                        
-                        // Award XP for completing activity
-                        if (userProfileRepository != null) {
-                            userProfileRepository.addCompletedActivity(new UserProfileRepository.ActionCallback() {
-                                @Override
-                                public void onSuccess() {
-                                    // Check if all activities for this day are now completed
-                                    checkAndIncrementStreak(dayStart, dayEnd, callback);
-                                }
-
-                                @Override
-                                public void onError(String error) {
-                                    // Still check streak even if XP fails
-                                    checkAndIncrementStreak(dayStart, dayEnd, callback);
-                                }
-                            });
-                        } else {
-                            checkAndIncrementStreak(dayStart, dayEnd, callback);
+            // Read asynchronously to avoid blocking the main thread.
+            activityDocument(activityId).get()
+                    .addOnSuccessListener(snapshot -> {
+                        Activity activity = snapshot.toObject(Activity.class);
+                        if (activity == null) {
+                            callback.onError("Activity not found");
+                            return;
                         }
+
+                        long scheduledTime = activity.getScheduledTime();
+                        long dayStart = getDayStart(scheduledTime);
+                        long dayEnd = getDayEnd(scheduledTime);
+
+                        Map<String, Object> updates = new java.util.LinkedHashMap<>();
+                        updates.put("completed", true);
+                        updates.put("completedTime", System.currentTimeMillis());
+
+                        activityDocument(activityId).update(updates)
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d(TAG, "Activity marked as completed: " + activityId);
+                                    dataChangedTrigger.postValue(activityId);
+
+                                    // Cancel pre-miss reminder since activity is completed
+                                    PreMissReminderScheduler.cancelPreMissReminder(context, activityId);
+
+                                    // Award XP for completing activity
+                                    if (userProfileRepository != null) {
+                                        userProfileRepository.addCompletedActivity(new UserProfileRepository.ActionCallback() {
+                                            @Override
+                                            public void onSuccess() {
+                                                // Check if all activities for this day are now completed
+                                                checkAndIncrementStreak(dayStart, dayEnd, callback);
+                                            }
+
+                                            @Override
+                                            public void onError(String error) {
+                                                // Still check streak even if XP fails
+                                                checkAndIncrementStreak(dayStart, dayEnd, callback);
+                                            }
+                                        });
+                                    } else {
+                                        checkAndIncrementStreak(dayStart, dayEnd, callback);
+                                    }
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e(TAG, "Failed to mark activity as completed: " + e.getMessage(), e);
+                                    callback.onError(e.getMessage() != null ? e.getMessage() : "Failed to update activity");
+                                });
                     })
                     .addOnFailureListener(e -> {
-                        Log.e(TAG, "Failed to mark activity as completed: " + e.getMessage(), e);
-                        callback.onError(e.getMessage() != null ? e.getMessage() : "Failed to update activity");
+                        Log.e(TAG, "Failed to load activity before completion: " + e.getMessage(), e);
+                        callback.onError(e.getMessage() != null ? e.getMessage() : "Failed to load activity");
                     });
         } catch (Exception e) {
             Log.e(TAG, "Exception in markAsCompleted: " + e.getMessage(), e);

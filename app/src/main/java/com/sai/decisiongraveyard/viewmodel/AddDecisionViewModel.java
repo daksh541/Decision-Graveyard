@@ -38,7 +38,13 @@ public class AddDecisionViewModel extends AndroidViewModel {
 
     public AddDecisionViewModel(@NonNull Application application) {
         super(application);
-        repository = RepositoryProvider.getInstance(application).getDecisionRepository();
+        DecisionRepository tempRepository;
+        try {
+            tempRepository = RepositoryProvider.getInstance(application).getDecisionRepository();
+        } catch (RuntimeException exception) {
+            tempRepository = null;
+        }
+        repository = tempRepository;
     }
 
     public LiveData<SaveState> getSaveState() {
@@ -58,25 +64,19 @@ public class AddDecisionViewModel extends AndroidViewModel {
     }
 
     public void saveDecision(String title, String description, String category, long evaluationTime) {
-        android.util.Log.d("AddDecisionViewModel", "saveDecision called");
         String trimmedTitle = title == null ? "" : title.trim();
         String trimmedCategory = category == null ? "" : category.trim().toLowerCase();
 
-        android.util.Log.d("AddDecisionViewModel", "Trimmed values - title: " + trimmedTitle + ", category: " + trimmedCategory);
-
         if (trimmedTitle.isEmpty()) {
-            android.util.Log.w("AddDecisionViewModel", "Title is empty");
-            saveState.postValue(new SaveState(false, "Title is required.", -1L, -1L, null));
+            saveState.setValue(new SaveState(false, "Title is required.", -1L, -1L, null));
             return;
         }
         if (trimmedCategory.isEmpty()) {
-            android.util.Log.w("AddDecisionViewModel", "Category is empty");
-            saveState.postValue(new SaveState(false, "Select a category.", -1L, -1L, null));
+            saveState.setValue(new SaveState(false, "Select a category.", -1L, -1L, null));
             return;
         }
         if (evaluationTime <= System.currentTimeMillis()) {
-            android.util.Log.w("AddDecisionViewModel", "Evaluation time is in the past");
-            saveState.postValue(new SaveState(false, "Choose a future review date.", -1L, -1L, null));
+            saveState.setValue(new SaveState(false, "Choose a future review date.", -1L, -1L, null));
             return;
         }
 
@@ -86,8 +86,17 @@ public class AddDecisionViewModel extends AndroidViewModel {
         // Check for similar decision asynchronously
         executorService.execute(() -> {
             try {
+                if (repository == null) {
+                    saveState.postValue(new SaveState(
+                            false,
+                            "Repository unavailable.",
+                            -1L,
+                            -1L,
+                            null
+                    ));
+                    return;
+                }
                 if (repository.hasSimilarDecision(trimmedTitle, trimmedCategory, System.currentTimeMillis())) {
-                    android.util.Log.w("AddDecisionViewModel", "Similar decision exists");
                     saveState.postValue(new SaveState(
                             false,
                             "A similar decision already exists in the last 24 hours.",
@@ -97,8 +106,6 @@ public class AddDecisionViewModel extends AndroidViewModel {
                     ));
                     return;
                 }
-
-                android.util.Log.d("AddDecisionViewModel", "Calling repository.createDecision (async) with decisionId: " + decisionId);
                 
                 repository.createDecision(
                         decisionId,
@@ -109,7 +116,6 @@ public class AddDecisionViewModel extends AndroidViewModel {
                         new DecisionRepository.ActionCallback() {
                             @Override
                             public void onSuccess() {
-                                android.util.Log.d("AddDecisionViewModel", "Decision created successfully with ID: " + decisionId);
                                 saveState.postValue(new SaveState(
                                         true,
                                         "Decision saved.",
@@ -121,7 +127,6 @@ public class AddDecisionViewModel extends AndroidViewModel {
 
                             @Override
                             public void onError(String error) {
-                                android.util.Log.e("AddDecisionViewModel", "Error during save: " + error);
                                 saveState.postValue(new SaveState(
                                         false,
                                         error != null ? error : "Couldn't save your decision.",
@@ -133,7 +138,6 @@ public class AddDecisionViewModel extends AndroidViewModel {
                         }
                 );
             } catch (Exception exception) {
-                android.util.Log.e("AddDecisionViewModel", "Exception during save check: " + exception.getMessage(), exception);
                 saveState.postValue(new SaveState(
                         false,
                         exception.getMessage() == null ? "Couldn't save your decision." : exception.getMessage(),

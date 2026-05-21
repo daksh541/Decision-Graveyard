@@ -52,6 +52,8 @@ public class TimelineDayAdapter extends RecyclerView.Adapter<TimelineDayAdapter.
     static class TimelineDayViewHolder extends RecyclerView.ViewHolder {
 
         private final TextView tvDayDate;
+        private final TextView tvDayScore;
+        private final TextView tvDayMeta;
         private final RecyclerView recyclerViewEvents;
         private final TimelineEventAdapter eventAdapter;
         private final SimpleDateFormat monthDayFormat = new SimpleDateFormat("MMM dd", Locale.getDefault());
@@ -60,6 +62,8 @@ public class TimelineDayAdapter extends RecyclerView.Adapter<TimelineDayAdapter.
         TimelineDayViewHolder(@NonNull View itemView) {
             super(itemView);
             tvDayDate = itemView.findViewById(R.id.tvDayDate);
+            tvDayScore = itemView.findViewById(R.id.tvDayScore);
+            tvDayMeta = itemView.findViewById(R.id.tvDayMeta);
             recyclerViewEvents = itemView.findViewById(R.id.recyclerViewEvents);
 
             recyclerViewEvents.setLayoutManager(new LinearLayoutManager(itemView.getContext()));
@@ -69,6 +73,8 @@ public class TimelineDayAdapter extends RecyclerView.Adapter<TimelineDayAdapter.
 
         void bind(TimelineRepository.TimelineDay day) {
             tvDayDate.setText(buildDayLabel(day));
+            tvDayScore.setText(day.score >= 0 ? "+" + day.score : String.valueOf(day.score));
+            tvDayMeta.setText(buildMeta(day));
 
             List<TimelineEvent> sortedEvents = day.events;
             sortedEvents.sort((a, b) -> Long.compare(b.getTimestamp(), a.getTimestamp()));
@@ -84,6 +90,13 @@ public class TimelineDayAdapter extends RecyclerView.Adapter<TimelineDayAdapter.
                 return "Yesterday, " + monthDayFormat.format(new Date(day.timestamp));
             }
             return fullFormat.format(new Date(day.timestamp));
+        }
+
+        private String buildMeta(TimelineRepository.TimelineDay day) {
+            int totalEvents = day.events == null ? 0 : day.events.size();
+            return totalEvents + " events • "
+                    + Math.round(day.completionRate) + "% completion • "
+                    + day.goodDecisions + " wins";
         }
     }
 }

@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/bg_main"
     android:fillViewport="true">
 
     <LinearLayout
@@ -17,10 +18,10 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/profile_title"
+            android:fontFamily="@font/playfair_display"
+            android:text="Control Room"
             android:textColor="@color/text_primary"
-            android:textSize="28sp"
-            android:textStyle="bold" />
+            android:textSize="30sp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -34,20 +35,23 @@
             style="@style/Widget.DecisionGraveyard.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp">
+            android:layout_marginTop="18dp"
+            app:cardBackgroundColor="@android:color/transparent"
+            app:strokeWidth="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@drawable/bg_hero_panel"
                 android:gravity="center_horizontal"
                 android:orientation="vertical"
                 android:padding="24dp">
 
                 <ImageView
-                    android:layout_width="84dp"
-                    android:layout_height="84dp"
-                    android:background="@drawable/bg_badge_primary"
-                    android:padding="22dp"
+                    android:layout_width="82dp"
+                    android:layout_height="82dp"
+                    android:background="@drawable/bg_chip_soft"
+                    android:padding="20dp"
                     android:src="@drawable/ic_profile"
                     app:tint="@color/text_primary" />
 
@@ -73,7 +77,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
-                    android:background="@drawable/bg_badge_primary"
+                    android:background="@drawable/bg_chip_soft"
                     android:paddingStart="12dp"
                     android:paddingTop="6dp"
                     android:paddingEnd="12dp"
@@ -122,7 +126,9 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:background="@drawable/bg_metric_panel"
+                        android:orientation="vertical"
+                        android:padding="14dp">
 
                         <TextView
                             android:id="@+id/tvTotalDecisions"
@@ -136,17 +142,19 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
                             android:text="@string/total_decisions"
                             android:textColor="@color/text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
                     </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:background="@drawable/bg_metric_panel"
+                        android:orientation="vertical"
+                        android:padding="14dp">
 
                         <TextView
                             android:id="@+id/tvEvaluatedDecisions"
@@ -160,17 +168,19 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
                             android:text="@string/evaluated_decisions"
                             android:textColor="@color/text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
                     </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:background="@drawable/bg_metric_panel"
+                        android:orientation="vertical"
+                        android:padding="14dp">
 
                         <TextView
                             android:id="@+id/tvPendingDecisions"
@@ -184,59 +194,68 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
                             android:text="@string/pending_decisions"
                             android:textColor="@color/text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
                     </LinearLayout>
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
+                    android:layout_marginTop="14dp"
                     android:orientation="horizontal">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="@string/profile_activity_rate"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="14sp" />
+                        android:background="@drawable/bg_metric_panel"
+                        android:orientation="vertical"
+                        android:padding="14dp">
 
-                    <TextView
-                        android:id="@+id/tvActivityCompletionRate"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0%"
-                        android:textColor="@color/primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                        <TextView
+                            android:id="@+id/tvActivityCompletionRate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0%"
+                            android:textColor="@color/primary"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/profile_activity_rate"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:text="@string/profile_discipline_streak"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="14sp" />
+                        android:background="@drawable/bg_metric_panel"
+                        android:orientation="vertical"
+                        android:padding="14dp">
 
-                    <TextView
-                        android:id="@+id/tvDisciplineStreak"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0"
-                        android:textColor="@color/success"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        <TextView
+                            android:id="@+id/tvDisciplineStreak"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textColor="@color/streak_gold"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/profile_discipline_streak"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -301,7 +320,7 @@
                         android:id="@+id/tvNotificationIntensity"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/bg_badge_surface"
+                        android:background="@drawable/bg_chip_soft"
                         android:paddingStart="10dp"
                         android:paddingTop="5dp"
                         android:paddingEnd="10dp"
@@ -346,14 +365,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_badge_primary"
-                    android:paddingStart="10dp"
-                    android:paddingTop="5dp"
-                    android:paddingEnd="10dp"
-                    android:paddingBottom="5dp"
                     android:text="10 min"
                     android:textColor="@color/text_primary"
-                    android:textSize="12sp"
+                    android:textSize="15sp"
                     android:textStyle="bold" />
 
                 <SeekBar
@@ -362,7 +376,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:max="11"
-                    android:progress="1" />
+                    android:progress="1"
+                    android:progressTint="@color/primary"
+                    android:thumbTint="@color/primary" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -451,62 +467,52 @@
                     android:textStyle="bold" />
 
                 <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipGoals"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp">
+                    android:layout_marginTop="14dp"
+                    app:singleLine="false">
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipGoalFitness"
                         style="@style/Widget.DecisionGraveyard.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
                         android:checkable="true"
                         android:text="Fitness" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipGoalStudy"
                         style="@style/Widget.DecisionGraveyard.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
                         android:checkable="true"
                         android:text="Study" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipGoalProductivity"
                         style="@style/Widget.DecisionGraveyard.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
                         android:checkable="true"
                         android:text="Productivity" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipGoalFinance"
                         style="@style/Widget.DecisionGraveyard.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
                         android:checkable="true"
                         android:text="Finance" />
                 </com.google.android.material.chip.ChipGroup>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSavePreferences"
+                    style="@style/Widget.DecisionGraveyard.Button.Filled"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:text="@string/profile_save" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnLogout"
+                    style="@style/Widget.DecisionGraveyard.Button.Secondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/logout" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSavePreferences"
-            style="@style/Widget.DecisionGraveyard.Button.Filled"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/profile_save" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnLogout"
-            style="@style/Widget.DecisionGraveyard.Button.Secondary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/logout"
-            android:textColor="@color/danger" />
-
     </LinearLayout>
 </ScrollView>

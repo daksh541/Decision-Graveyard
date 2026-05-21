@@ -41,6 +41,9 @@ public class LoginActivity extends AppCompatActivity {
     private TextInputEditText etConfirmPassword;
     private MaterialButton btnPrimaryAuth;
     private MaterialButton btnAuthSecondary;
+    private MaterialButton btnModeSignIn;
+    private MaterialButton btnModeCreate;
+    private View btnGoogleSignIn;
     private ProgressBar progressBar;
     private AuthHelper authHelper;
     private GoogleSignInClient googleSignInClient;
@@ -72,6 +75,9 @@ public class LoginActivity extends AppCompatActivity {
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
         btnPrimaryAuth = findViewById(R.id.btnPrimaryAuth);
         btnAuthSecondary = findViewById(R.id.btnAuthSecondary);
+        btnModeSignIn = findViewById(R.id.btnModeSignIn);
+        btnModeCreate = findViewById(R.id.btnModeCreate);
+        btnGoogleSignIn = findViewById(R.id.btnGoogleSignIn);
         progressBar = findViewById(R.id.progressBar);
         tvForgotPassword = findViewById(R.id.tvForgotPassword);
         tvAuthHeading = findViewById(R.id.tvAuthHeading);
@@ -97,7 +103,7 @@ public class LoginActivity extends AppCompatActivity {
             authModeToggle.check(isCreateMode ? R.id.btnModeSignIn : R.id.btnModeCreate);
         });
         tvForgotPassword.setOnClickListener(v -> resetPassword());
-        findViewById(R.id.btnGoogleSignIn).setOnClickListener(v -> signInWithGoogle());
+        btnGoogleSignIn.setOnClickListener(v -> signInWithGoogle());
 
         isCreateMode = MODE_CREATE.equals(getIntent().getStringExtra(EXTRA_START_MODE));
         authModeToggle.check(isCreateMode ? R.id.btnModeCreate : R.id.btnModeSignIn);
@@ -218,7 +224,7 @@ public class LoginActivity extends AppCompatActivity {
                 setLoading(false);
                 Toast.makeText(
                         LoginActivity.this,
-                        "If this email has password sign-in enabled, a reset email will arrive shortly.",
+                        "If this email supports password login, a reset email will arrive shortly.",
                         Toast.LENGTH_LONG
                 ).show();
             }
@@ -273,7 +279,9 @@ public class LoginActivity extends AppCompatActivity {
         btnPrimaryAuth.setEnabled(!isLoading);
         btnAuthSecondary.setEnabled(!isLoading);
         authModeToggle.setEnabled(!isLoading);
-        findViewById(R.id.btnGoogleSignIn).setEnabled(!isLoading);
+        btnModeSignIn.setEnabled(!isLoading);
+        btnModeCreate.setEnabled(!isLoading);
+        btnGoogleSignIn.setEnabled(!isLoading);
         tvForgotPassword.setEnabled(!isLoading);
     }
 
@@ -283,12 +291,12 @@ public class LoginActivity extends AppCompatActivity {
 
         if (isCreateMode) {
             tvAuthHeading.setText("Create your discipline profile.");
-            tvAuthCaption.setText("Set up your account, calibrate your baseline, and start logging the decisions that shape your score.");
+            tvAuthCaption.setText("Create a premium behavior dashboard, calibrate your baseline, and start logging the choices that shape your score.");
             btnPrimaryAuth.setText("Create Account");
             btnAuthSecondary.setText("Already have an account?");
         } else {
             tvAuthHeading.setText("Take Control.");
-            tvAuthCaption.setText("Track patterns, analyze choices, and bury bad habits permanently.");
+            tvAuthCaption.setText("Sign in to your AI-powered discipline system and pick up where your last pattern left off.");
             btnPrimaryAuth.setText("Continue");
             btnAuthSecondary.setText("Need an account?");
         }

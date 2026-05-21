@@ -24,10 +24,14 @@
     <color name="surface">#0F172A</color>
     <color name="surface_variant">#162033</color>
     <color name="surface_card">#1E293B</color>
+    <color name="surface_panel">#152033</color>
+    <color name="surface_panel_alt">#10192A</color>
     <color name="surface_card_glass">#CC1E293B</color>
+    <color name="surface_overlay">#80FFFFFF</color>
     <color name="border_glass">#0DFFFFFF</color>
     <color name="bottom_nav_glass">#B31E293B</color>
     <color name="surface_elevated">#273449</color>
+    <color name="surface_shadow">#33000000</color>
 
     <color name="text_primary">#FFFFFF</color>
     <color name="text_secondary">#94A3B8</color>
@@ -57,4 +61,9 @@
 
     <color name="streak_fire">#FB7185</color>
     <color name="streak_gold">#FBBF24</color>
+    <color name="heatmap_0">#162033</color>
+    <color name="heatmap_1">#1F3658</color>
+    <color name="heatmap_2">#2E5DA8</color>
+    <color name="heatmap_3">#2FC98D</color>
+    <color name="heatmap_4">#63F2B0</color>
 </resources>
