@@ -1,10 +1,12 @@
 package com.sai.decisiongraveyard.ui.dashboard;
 
+import android.animation.ObjectAnimator;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -13,11 +15,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import com.sai.decisiongraveyard.ui.widgets.DecisionScoreRingView;
-import com.sai.decisiongraveyard.util.ViewPressAnimations;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.sai.decisiongraveyard.R;
+import com.sai.decisiongraveyard.model.AiInsightReport;
+import com.sai.decisiongraveyard.model.AnalyticsSnapshot;
 import com.sai.decisiongraveyard.model.UserProfile;
 import com.sai.decisiongraveyard.repository.RepositoryProvider;
 import com.sai.decisiongraveyard.ui.activities.ActivityListFragment;
@@ -25,6 +27,11 @@ import com.sai.decisiongraveyard.ui.add.AddDecisionFragment;
 import com.sai.decisiongraveyard.ui.achievements.AchievementManager;
 import com.sai.decisiongraveyard.ui.insights.InsightsFragment;
 import com.sai.decisiongraveyard.ui.timeline.TimelineFragment;
+import com.sai.decisiongraveyard.ui.widgets.DecisionScoreRingView;
+import com.sai.decisiongraveyard.ui.widgets.HabitHeatmapView;
+import com.sai.decisiongraveyard.ui.widgets.RiskMeterView;
+import com.sai.decisiongraveyard.ui.widgets.TrendSparklineView;
+import com.sai.decisiongraveyard.util.ViewPressAnimations;
 import com.sai.decisiongraveyard.viewmodel.DashboardViewModel;
 
 import java.util.Calendar;
@@ -34,6 +41,7 @@ public class DashboardFragment extends Fragment {
 
     private DashboardViewModel viewModel;
     private AchievementManager achievementManager;
+
     private TextView tvGreeting;
     private TextView tvProfileName;
     private TextView tvLevelBadge;
@@ -48,12 +56,24 @@ public class DashboardFragment extends Fragment {
     private TextView tvDisciplineStreak;
     private TextView tvStreakWarning;
     private TextView tvCoachMessage;
+    private TextView tvBrainPattern;
+    private TextView tvWeeklySignal;
+    private TextView tvQuote;
+    private TextView tvRiskValue;
+    private TextView tvBehaviorSummary;
+    private TextView tvPriorityOne;
+    private TextView tvPriorityTwo;
+    private TextView tvPriorityThree;
+    private TrendSparklineView trendSparklineView;
+    private HabitHeatmapView heatmapView;
+    private RiskMeterView riskMeterView;
     private ProgressBar progressBar;
 
     private int todayCompleted;
     private int todayMissed;
     private int todayRisky;
     private double activityRate;
+    private AiInsightReport latestReport = AiInsightReport.empty();
 
     @Nullable
     @Override
@@ -70,6 +90,7 @@ public class DashboardFragment extends Fragment {
                 this,
                 androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication())
         ).get(DashboardViewModel.class);
+
         bindViews(view);
         observeViewModel();
 
@@ -95,10 +116,22 @@ public class DashboardFragment extends Fragment {
         tvDisciplineStreak = view.findViewById(R.id.tvDisciplineStreak);
         tvStreakWarning = view.findViewById(R.id.tvStreakWarning);
         tvCoachMessage = view.findViewById(R.id.tvCoachMessage);
+        tvBrainPattern = view.findViewById(R.id.tvBrainPattern);
+        tvWeeklySignal = view.findViewById(R.id.tvWeeklySignal);
+        tvQuote = view.findViewById(R.id.tvQuote);
+        tvRiskValue = view.findViewById(R.id.tvRiskValue);
+        tvBehaviorSummary = view.findViewById(R.id.tvBehaviorSummary);
+        tvPriorityOne = view.findViewById(R.id.tvPriorityOne);
+        tvPriorityTwo = view.findViewById(R.id.tvPriorityTwo);
+        tvPriorityThree = view.findViewById(R.id.tvPriorityThree);
+        trendSparklineView = view.findViewById(R.id.trendSparklineView);
+        heatmapView = view.findViewById(R.id.heatmapView);
+        riskMeterView = view.findViewById(R.id.riskMeterView);
         progressBar = view.findViewById(R.id.progressBar);
 
         tvGreeting.setText(resolveGreeting());
         tvProfileName.setText(resolveProfileName());
+
         View btnQuickDecision = view.findViewById(R.id.btnQuickDecision);
         View btnQuickActivities = view.findViewById(R.id.btnQuickActivities);
         View btnQuickTimeline = view.findViewById(R.id.btnQuickTimeline);
@@ -114,28 +147,22 @@ public class DashboardFragment extends Fragment {
         ViewPressAnimations.attach(btnQuickTimeline);
         ViewPressAnimations.attach(btnQuickInsights);
 
-        View cardHero = view.findViewById(R.id.cardHeroScore);
-        View cardSummary = view.findViewById(R.id.cardTodaySummary);
-        if (cardHero != null) {
-            cardHero.startAnimation(android.view.animation.AnimationUtils.loadAnimation(requireContext(), R.anim.card_enter));
-        }
-        if (cardSummary != null) {
-            android.view.animation.Animation animation = android.view.animation.AnimationUtils.loadAnimation(requireContext(), R.anim.card_enter);
-            animation.setStartOffset(80);
-            cardSummary.startAnimation(animation);
-        }
+        animateCard(view.findViewById(R.id.cardHeroScore), 0L);
+        animateCard(view.findViewById(R.id.cardTodaySummary), 90L);
+        animateCard(view.findViewById(R.id.cardPatternPulse), 160L);
+        animateCard(view.findViewById(R.id.cardWeeklyArc), 220L);
     }
 
     private void observeViewModel() {
         viewModel.getUserProfile().observe(getViewLifecycleOwner(), this::updateProfileUI);
         viewModel.getDecisionScore().observe(getViewLifecycleOwner(), score -> {
-            tvDecisionScore.setText(String.valueOf(score));
-            scoreRing.setProgress(score);
-            updateCoachMessage();
+            if (!latestReport.isAiGenerated() && latestReport.getBehaviorScore() == 0) {
+                scoreRing.setProgress(score);
+                tvDecisionScore.setText(String.valueOf(score));
+            }
         });
         viewModel.getActivityCompletionRate().observe(getViewLifecycleOwner(), rate -> {
             activityRate = rate;
-            tvTodayRisky.setText(String.format(Locale.getDefault(), "%.0f%%", rate));
             updateCoachMessage();
         });
         viewModel.getTodayCompletedActivities().observe(getViewLifecycleOwner(), count -> {
@@ -153,6 +180,7 @@ public class DashboardFragment extends Fragment {
             tvTodayRisky.setText(String.valueOf(count));
             updateCoachMessage();
         });
+        viewModel.getAnalyticsSnapshot().observe(getViewLifecycleOwner(), this::bindAnalyticsSnapshot);
         viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading ->
                 progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE)
         );
@@ -164,6 +192,36 @@ public class DashboardFragment extends Fragment {
         });
     }
 
+    private void bindAnalyticsSnapshot(AnalyticsSnapshot snapshot) {
+        if (snapshot == null) {
+            return;
+        }
+        latestReport = snapshot.getAiInsightReport();
+        int displayScore = latestReport.getBehaviorScore() > 0 ? latestReport.getBehaviorScore() : snapshot.getQualityScore();
+        scoreRing.setProgress(displayScore);
+        tvDecisionScore.setText(String.valueOf(displayScore));
+        tvScoreTrend.setText(latestReport.getCoachPersona().isEmpty() ? "Behavior score" : latestReport.getCoachPersona());
+        tvBehaviorSummary.setText(latestReport.getSummary().isEmpty() ? "Your behavioral signal is still forming." : latestReport.getSummary());
+        tvBrainPattern.setText(latestReport.getBrainPattern().isEmpty() ? "Track more decisions to reveal your dominant pattern." : latestReport.getBrainPattern());
+        tvWeeklySignal.setText(latestReport.getWeeklyReport().isEmpty() ? "No weekly report yet." : latestReport.getWeeklyReport());
+        tvQuote.setText(latestReport.getQuote().isEmpty() ? "Small disciplined choices compound." : latestReport.getQuote());
+        tvRiskValue.setText(String.format(Locale.getDefault(), "%d%%", latestReport.getRiskScore()));
+        riskMeterView.setRiskValue(latestReport.getRiskScore());
+        trendSparklineView.setValues(snapshot.getWeeklyQualityTrend());
+        heatmapView.setCells(snapshot.getHeatmapCells());
+        bindPriorities(latestReport);
+        updateCoachMessage();
+    }
+
+    private void bindPriorities(AiInsightReport report) {
+        String first = report.getWeeklyPriorities().size() > 0 ? report.getWeeklyPriorities().get(0) : "Protect your next clean routine.";
+        String second = report.getWeeklyPriorities().size() > 1 ? report.getWeeklyPriorities().get(1) : "Reduce friction before weak hours.";
+        String third = report.getWeeklyPriorities().size() > 2 ? report.getWeeklyPriorities().get(2) : "Close the loop on overdue reviews.";
+        tvPriorityOne.setText(first);
+        tvPriorityTwo.setText(second);
+        tvPriorityThree.setText(third);
+    }
+
     private void updateProfileUI(UserProfile profile) {
         if (profile == null) {
             return;
@@ -171,8 +229,9 @@ public class DashboardFragment extends Fragment {
 
         tvLevelBadge.setText(String.format(Locale.getDefault(), "LVL %d", profile.getCurrentLevel()));
         tvXPProgress.setText(profile.getCurrentXP() + " / " + profile.getXpToNextLevel());
-        progressXP.setProgress((int) profile.getProgressPercentage());
-        tvDisciplineStreak.setText(String.format(Locale.getDefault(), "%d Day Streak", profile.getDailyDisciplineStreak()));
+        animateProgress(progressXP, (int) profile.getProgressPercentage());
+        tvDisciplineStreak.setText(String.format(Locale.getDefault(), "%d day streak", profile.getDailyDisciplineStreak()));
+        tvStreakWarning.setText(resolveStreakWarning(profile));
 
         if (achievementManager != null) {
             achievementManager.checkStreak(profile.getDailyDisciplineStreak());
@@ -182,45 +241,46 @@ public class DashboardFragment extends Fragment {
         updateCoachMessage();
     }
 
+    private void updateCoachMessage() {
+        if (latestReport != null && !latestReport.getRecoverySuggestion().isEmpty()) {
+            tvCoachMessage.setText(latestReport.getRecoverySuggestion());
+            return;
+        }
+
+        if (todayMissed > 0 && todayCompleted == 0) {
+            tvCoachMessage.setText("You already slipped today. Recover with one clean action now.");
+            return;
+        }
+        if (todayRisky > 0) {
+            tvCoachMessage.setText("Risk is clustering today. Slow down before your next decision.");
+            return;
+        }
+        if (todayCompleted >= 3 && activityRate >= 70) {
+            tvCoachMessage.setText("Momentum is clean today. Keep pressing the advantage.");
+            return;
+        }
+        tvCoachMessage.setText("One deliberate action can still improve the whole day.");
+    }
+
     private String resolveGreeting() {
         int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
         if (hour < 12) {
-            return "Welcome back";
+            return "Morning signal";
         }
         if (hour < 18) {
-            return "Back at it";
+            return "Daily pulse";
         }
-        return "Keep your edge";
+        return "Night watch";
     }
 
     private String resolveStreakWarning(UserProfile profile) {
         if (profile.getDailyDisciplineStreak() >= 7) {
-            return "Locked in. Protect the streak.";
+            return "Momentum locked";
         }
         if (profile.getMissedDayStreak() > 0) {
-            return "You are close to breaking momentum.";
+            return "Drift detected";
         }
-        return "Momentum is fragile. Show up today.";
-    }
-
-    private void updateCoachMessage() {
-        String message;
-
-        if (todayMissed > 0 && todayCompleted == 0) {
-            message = "You already slipped today. Recover with one clean action now.";
-        } else if (todayRisky > 0) {
-            message = "Your risky choices are clustering. Slow down before the next one.";
-        } else if (todayCompleted >= 3 && activityRate >= 70) {
-            message = "Today feels disciplined. Keep the pressure on.";
-        } else if (TextUtils.isEmpty(tvDecisionScore.getText()) || "0".contentEquals(tvDecisionScore.getText())) {
-            message = "No pattern yet. Start tracking honestly and the signal will show up.";
-        } else {
-            message = "You are one deliberate action away from control.";
-        }
-
-        tvCoachMessage.setText(message);
-        tvStreakWarning.setText("LIVE SIGNAL");
-        tvScoreTrend.setText(buildTrendMessage());
+        return "Signal live";
     }
 
     @Override
@@ -262,22 +322,32 @@ public class DashboardFragment extends Fragment {
         return builder.toString().trim();
     }
 
-    private String buildTrendMessage() {
-        int delta = todayCompleted - todayRisky - todayMissed;
-        if (delta > 0) {
-            return String.format(Locale.getDefault(), "+%d today", delta);
-        }
-        if (todayRisky > 0 || todayMissed > 0) {
-            return "Under pressure";
-        }
-        return "Signal forming";
-    }
-
     private void openFragment(Fragment fragment) {
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragmentContainer, fragment)
-                .addToBackStack(null)
+                .addToBackStack(fragment.getClass().getSimpleName())
                 .commit();
+    }
+
+    private void animateCard(@Nullable View view, long delayMs) {
+        if (view == null) {
+            return;
+        }
+        view.startAnimation(AnimationUtils.loadAnimation(requireContext(), R.anim.card_enter));
+        view.setAlpha(0f);
+        view.setTranslationY(30f);
+        view.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setStartDelay(delayMs)
+                .setDuration(380L)
+                .start();
+    }
+
+    private void animateProgress(ProgressBar progressBar, int target) {
+        ObjectAnimator.ofInt(progressBar, "progress", progressBar.getProgress(), target)
+                .setDuration(650L)
+                .start();
     }
 }

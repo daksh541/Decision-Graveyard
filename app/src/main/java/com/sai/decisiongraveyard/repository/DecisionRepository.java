@@ -16,21 +16,24 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.sai.decisiongraveyard.model.AiInsightReport;
 import com.sai.decisiongraveyard.model.AnalyticsSnapshot;
 import com.sai.decisiongraveyard.model.AnalyticsSnapshot.PatternRepetition;
 import com.sai.decisiongraveyard.model.CategoryInsight;
 import com.sai.decisiongraveyard.model.Decision;
 import com.sai.decisiongraveyard.model.DecisionRecord;
 import com.sai.decisiongraveyard.model.Evaluation;
+import com.sai.decisiongraveyard.model.HeatmapCell;
 import com.sai.decisiongraveyard.util.DateUtils;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class DecisionRepository {
 
@@ -528,28 +531,17 @@ public class DecisionRepository {
             }
         }
 
-        // Calculate intensity level based on bad decision rate
         int intensityLevel = totalEvaluated == 0 ? 0 : (int) Math.round(badCount * 100.0 / totalEvaluated);
-
-        // Calculate consequence points
         int consequencePoints = (goodCount * 5) - (badCount * 10);
         String consequenceMessage = generateConsequenceMessage(consequencePoints);
-
-        // Generate insights based on mode
         List<String> generatedInsights = generateInsights(
                 worstCategory, worstTimeLabel, highestTimeRegretRate, readyCount,
                 goodCount, badCount, totalEvaluated, brutalMode, intensityLevel
         );
-
-        // Generate actionable insights
         List<String> actionableInsights = generateActionableInsights(
                 worstCategory, worstTimeLabel, highestTimeRegretRate, intensityLevel
         );
-
-        // Detect pattern repetitions
         List<PatternRepetition> patternRepetitions = detectPatternRepetitions(records);
-
-        // Collect activity metrics
         int totalActivities = 0;
         int completedActivities = 0;
         int missedActivities = 0;
@@ -573,22 +565,15 @@ public class DecisionRepository {
             Log.w(TAG, "Could not fetch activity metrics: " + e.getMessage());
         }
 
-        // Generate activity-based insights
         List<String> activityInsights = generateActivityInsights(missedByCategory, missedActivities, totalActivities);
-
-        // Generate cause-effect insights (missed activities → bad decisions)
         List<String> causeEffectInsights = generateCauseEffectInsights(records, missedByCategory, missedActivities);
         activityInsights.addAll(causeEffectInsights);
-
-        // Detect failure patterns and add pattern-based insights
         String patternMessage = "";
         try {
             com.sai.decisiongraveyard.model.PatternTracker patternTracker = activityRepository.detectFailurePattern();
             if (patternTracker.isPatternDetected()) {
                 patternMessage = patternTracker.getPatternMessage();
                 activityInsights.add(patternMessage);
-                
-                // Create recovery mission if pattern detected and no active mission exists
                 if (recoveryMissionRepository.getActiveMission() == null) {
                     recoveryMissionRepository.createRecoveryMission(
                             patternTracker.getRecoveryActivitiesNeeded(),
@@ -612,8 +597,42 @@ public class DecisionRepository {
             Log.w(TAG, "Could not detect failure pattern: " + e.getMessage());
         }
 
-        // Prioritize insights to prevent overwhelm - show only top 3 most critical
         activityInsights = prioritizeInsights(activityInsights, patternMessage);
+        List<Integer> weeklyQualityTrend = buildWeeklyTrendPoints(records);
+        List<HeatmapCell> heatmapCells = buildHeatmapCells(records);
+        int goodStreak = calculateCurrentGoodStreak(records);
+        int badStreak = calculateCurrentBadStreak(records);
+        int activityCompletionRate = totalActivities == 0
+                ? 0
+                : (int) Math.round((completedActivities * 100.0) / totalActivities);
+        int behaviorScore = computeBehaviorScore(goodCount, totalEvaluated, activityCompletionRate, goodStreak, badStreak);
+        int riskScore = computeRiskScore(badCount, totalEvaluated, highestTimeRegretRate, missedActivities, totalActivities);
+        int disciplineScore = computeDisciplineScore(behaviorScore, activityCompletionRate, goodStreak);
+        LLMService.BehavioralContext behavioralContext = buildBehavioralContext(
+                totalEvaluated,
+                goodCount,
+                badCount,
+                neutralCount,
+                readyCount,
+                upcomingCount,
+                activityCompletionRate,
+                completedActivities,
+                missedActivities,
+                goodStreak,
+                badStreak,
+                behaviorScore,
+                riskScore,
+                disciplineScore,
+                highestTimeRegretRate,
+                worstCategory,
+                worstTimeLabel,
+                patternRepetitions,
+                activityInsights,
+                weeklyQualityTrend
+        );
+        AiInsightReport aiInsightReport = llmService == null
+                ? AiInsightReport.empty()
+                : llmService.generateBehavioralReport(behavioralContext, brutalMode);
 
         return new AnalyticsSnapshot(
                 records.size(),
@@ -633,7 +652,10 @@ public class DecisionRepository {
                 totalActivities,
                 completedActivities,
                 missedActivities,
-                activityInsights
+                activityInsights,
+                aiInsightReport,
+                heatmapCells,
+                weeklyQualityTrend
         );
     }
 
@@ -966,6 +988,268 @@ public class DecisionRepository {
         }
         
         return prioritized;
+    }
+
+    private LLMService.BehavioralContext buildBehavioralContext(
+            int totalEvaluated,
+            int goodCount,
+            int badCount,
+            int neutralCount,
+            int readyCount,
+            int upcomingCount,
+            int activityCompletionRate,
+            int completedActivities,
+            int missedActivities,
+            int goodStreak,
+            int badStreak,
+            int behaviorScore,
+            int riskScore,
+            int disciplineScore,
+            int highestTimeRegretRate,
+            CategoryInsight worstCategory,
+            String worstTimeLabel,
+            List<PatternRepetition> patternRepetitions,
+            List<String> activityInsights,
+            List<Integer> weeklyQualityTrend
+    ) {
+        LLMService.BehavioralContext context = new LLMService.BehavioralContext();
+        context.totalEvaluated = totalEvaluated;
+        context.goodCount = goodCount;
+        context.badCount = badCount;
+        context.neutralCount = neutralCount;
+        context.readyForReviewCount = readyCount;
+        context.upcomingCount = upcomingCount;
+        context.activityCompletionRate = activityCompletionRate;
+        context.completedActivities = completedActivities;
+        context.missedActivities = missedActivities;
+        context.disciplineStreak = goodStreak;
+        context.badStreak = badStreak;
+        context.behaviorScore = behaviorScore;
+        context.riskScore = riskScore;
+        context.disciplineScore = disciplineScore;
+        context.lateNightRisk = Math.max(0, highestTimeRegretRate);
+        context.worstCategoryRegretRate = worstCategory == null ? 0 : worstCategory.getRegretRate();
+        context.worstCategory = worstCategory == null ? "personal" : worstCategory.getCategory();
+        context.worstTimeWindow = worstTimeLabel == null ? "Unknown" : worstTimeLabel;
+        context.dominantEmotion = resolveDominantEmotion(worstCategory, highestTimeRegretRate, badStreak);
+        context.activityCorrelationHint = resolveActivityCorrelationHint(activityCompletionRate, activityInsights);
+        context.recoveryMissionHint = resolveRecoveryHint(activityInsights, badStreak, activityCompletionRate);
+        context.weeklyMomentum = resolveMomentumLabel(weeklyQualityTrend);
+        context.patternHighlights = extractPatternHighlights(patternRepetitions, activityInsights);
+        context.weeklyTrend = buildTrendLabels(weeklyQualityTrend);
+        return context;
+    }
+
+    private List<HeatmapCell> buildHeatmapCells(List<DecisionRecord> records) {
+        Map<Long, Integer> dayIntensity = new LinkedHashMap<>();
+        long today = getStartOfDay(System.currentTimeMillis());
+        for (int i = 27; i >= 0; i--) {
+            long day = today - (i * 24L * 60L * 60L * 1000L);
+            dayIntensity.put(day, 0);
+        }
+
+        for (DecisionRecord record : records) {
+            long decisionDay = getStartOfDay(record.getDecision().getDecisionTime());
+            if (!dayIntensity.containsKey(decisionDay)) {
+                continue;
+            }
+
+            int delta = record.isEvaluated()
+                    ? ("good".equals(record.getEvaluation().getOutcome()) ? 2 : "bad".equals(record.getEvaluation().getOutcome()) ? -1 : 1)
+                    : 1;
+            int current = dayIntensity.get(decisionDay);
+            dayIntensity.put(decisionDay, Math.max(-2, Math.min(4, current + delta)));
+        }
+
+        List<HeatmapCell> cells = new ArrayList<>();
+        for (Map.Entry<Long, Integer> entry : dayIntensity.entrySet()) {
+            int normalized = Math.max(0, Math.min(4, entry.getValue() + 1));
+            cells.add(new HeatmapCell(entry.getKey(), normalized, DateUtils.formatDate(entry.getKey())));
+        }
+        return cells;
+    }
+
+    private List<Integer> buildWeeklyTrendPoints(List<DecisionRecord> records) {
+        Map<Long, int[]> dayStats = new LinkedHashMap<>();
+        long today = getStartOfDay(System.currentTimeMillis());
+        for (int i = 6; i >= 0; i--) {
+            long day = today - (i * 24L * 60L * 60L * 1000L);
+            dayStats.put(day, new int[2]);
+        }
+
+        for (DecisionRecord record : records) {
+            if (!record.isEvaluated()) {
+                continue;
+            }
+            long day = getStartOfDay(record.getEvaluation().getEvaluatedAt());
+            int[] stats = dayStats.get(day);
+            if (stats == null) {
+                continue;
+            }
+            stats[1]++;
+            if ("good".equals(record.getEvaluation().getOutcome())) {
+                stats[0]++;
+            }
+        }
+
+        List<Integer> trend = new ArrayList<>();
+        for (int[] stats : dayStats.values()) {
+            trend.add(stats[1] == 0 ? 0 : (int) Math.round((stats[0] * 100.0) / stats[1]));
+        }
+        return trend;
+    }
+
+    private List<String> buildTrendLabels(List<Integer> weeklyQualityTrend) {
+        List<String> labels = new ArrayList<>();
+        for (int score : weeklyQualityTrend) {
+            labels.add(score + "%");
+        }
+        return labels;
+    }
+
+    private int calculateCurrentGoodStreak(List<DecisionRecord> records) {
+        int streak = 0;
+        for (DecisionRecord record : records) {
+            if (!record.isEvaluated()) {
+                continue;
+            }
+            if ("good".equals(record.getEvaluation().getOutcome())) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+        return streak;
+    }
+
+    private int calculateCurrentBadStreak(List<DecisionRecord> records) {
+        int streak = 0;
+        for (DecisionRecord record : records) {
+            if (!record.isEvaluated()) {
+                continue;
+            }
+            if ("bad".equals(record.getEvaluation().getOutcome())) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+        return streak;
+    }
+
+    private int computeBehaviorScore(int goodCount, int totalEvaluated, int activityCompletionRate, int goodStreak, int badStreak) {
+        int qualityScore = totalEvaluated == 0 ? 0 : (int) Math.round((goodCount * 100.0) / totalEvaluated);
+        int streakBoost = Math.min(12, goodStreak * 4);
+        int badPenalty = Math.min(18, badStreak * 6);
+        return clampScore((int) Math.round((qualityScore * 0.65) + (activityCompletionRate * 0.35) + streakBoost - badPenalty));
+    }
+
+    private int computeRiskScore(int badCount, int totalEvaluated, int highestTimeRegretRate, int missedActivities, int totalActivities) {
+        int badRate = totalEvaluated == 0 ? 0 : (int) Math.round((badCount * 100.0) / totalEvaluated);
+        int missedRate = totalActivities == 0 ? 0 : (int) Math.round((missedActivities * 100.0) / totalActivities);
+        return clampScore((int) Math.round((badRate * 0.55) + (Math.max(0, highestTimeRegretRate) * 0.25) + (missedRate * 0.20)));
+    }
+
+    private int computeDisciplineScore(int behaviorScore, int activityCompletionRate, int goodStreak) {
+        return clampScore((int) Math.round((behaviorScore * 0.6) + (activityCompletionRate * 0.3) + Math.min(10, goodStreak * 2)));
+    }
+
+    private String resolveDominantEmotion(CategoryInsight worstCategory, int highestTimeRegretRate, int badStreak) {
+        if (badStreak >= 3) {
+            return "Overloaded";
+        }
+        if (highestTimeRegretRate >= 60) {
+            return "Tired and impulsive";
+        }
+        if (worstCategory != null && "money".equalsIgnoreCase(worstCategory.getCategory())) {
+            return "Reward-seeking";
+        }
+        if (worstCategory != null && "relationship".equalsIgnoreCase(worstCategory.getCategory())) {
+            return "Emotionally reactive";
+        }
+        return "Mixed";
+    }
+
+    private String resolveActivityCorrelationHint(int activityCompletionRate, List<String> activityInsights) {
+        if (activityInsights != null) {
+            for (String insight : activityInsights) {
+                if (insight != null && (insight.contains("connected") || insight.contains("execution"))) {
+                    return insight;
+                }
+            }
+        }
+        if (activityCompletionRate < 50) {
+            return "Execution gaps are likely feeding your lower-quality decisions.";
+        }
+        return "When your routine holds, your decisions stabilize faster.";
+    }
+
+    private String resolveRecoveryHint(List<String> activityInsights, int badStreak, int activityCompletionRate) {
+        if (activityInsights != null) {
+            for (String insight : activityInsights) {
+                if (insight != null && insight.toLowerCase().contains("regain control")) {
+                    return insight;
+                }
+            }
+        }
+        if (badStreak >= 2) {
+            return "Interrupt the spiral with one easy completed activity before any big decision.";
+        }
+        if (activityCompletionRate < 60) {
+            return "Lower the day's friction and finish the easiest task before noon.";
+        }
+        return "Protect the routines that already keep you steady.";
+    }
+
+    private String resolveMomentumLabel(List<Integer> weeklyQualityTrend) {
+        if (weeklyQualityTrend == null || weeklyQualityTrend.isEmpty()) {
+            return "Your weekly signal is still forming.";
+        }
+        int latest = weeklyQualityTrend.get(weeklyQualityTrend.size() - 1);
+        int previous = weeklyQualityTrend.size() > 1 ? weeklyQualityTrend.get(weeklyQualityTrend.size() - 2) : latest;
+        if (latest - previous >= 10) {
+            return "Momentum is rising.";
+        }
+        if (previous - latest >= 10) {
+            return "Momentum slipped late in the week.";
+        }
+        return "Momentum is stable but fragile.";
+    }
+
+    private List<String> extractPatternHighlights(List<PatternRepetition> patternRepetitions, List<String> activityInsights) {
+        List<String> highlights = new ArrayList<>();
+        for (PatternRepetition repetition : patternRepetitions) {
+            highlights.add(repetition.getCategory() + " / " + repetition.getTimePattern() + " x" + repetition.getCount());
+            if (highlights.size() == 2) {
+                break;
+            }
+        }
+        if (activityInsights != null) {
+            for (String insight : activityInsights) {
+                if (insight == null || insight.trim().isEmpty()) {
+                    continue;
+                }
+                highlights.add(insight);
+                if (highlights.size() == 3) {
+                    break;
+                }
+            }
+        }
+        return highlights;
+    }
+
+    private int clampScore(int value) {
+        return Math.max(0, Math.min(100, value));
+    }
+
+    private long getStartOfDay(long timestamp) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(timestamp);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTimeInMillis();
     }
 
     private List<PatternRepetition> detectPatternRepetitions(List<DecisionRecord> records) {

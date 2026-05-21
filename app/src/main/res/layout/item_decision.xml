@@ -6,7 +6,7 @@
     style="@style/Widget.DecisionGraveyard.Card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
+    android:layout_marginBottom="14dp"
     android:clickable="true"
     android:focusable="true">
 
@@ -17,7 +17,7 @@
 
         <View
             android:id="@+id/viewStatusStrip"
-            android:layout_width="4dp"
+            android:layout_width="5dp"
             android:layout_height="0dp"
             android:background="@color/grey"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -30,6 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="14dp"
+            android:textColor="@color/white"
             app:layout_constraintStart_toEndOf="@id/viewStatusStrip"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="Health" />
@@ -54,38 +55,44 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="14dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="12dp"
+            android:layout_marginTop="14dp"
+            android:layout_marginEnd="14dp"
+            android:fontFamily="@font/inter_semibold"
             android:maxLines="2"
             android:textColor="@color/text_primary"
-            android:textSize="17sp"
-            android:textStyle="bold"
+            android:textSize="18sp"
             app:layout_constraintEnd_toStartOf="@id/tvCountdown"
             app:layout_constraintStart_toEndOf="@id/viewStatusStrip"
             app:layout_constraintTop_toBottomOf="@id/chipCategory"
-            tools:text="Skip Breakfast" />
+            tools:text="Skip breakfast and buy junk food after a stressful call" />
 
         <TextView
             android:id="@+id/tvDecisionNote"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="14dp"
-            android:layout_marginTop="6dp"
-            android:layout_marginEnd="12dp"
-            android:maxLines="2"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="14dp"
+            android:lineSpacingExtra="2dp"
+            android:maxLines="3"
             android:textColor="@color/text_secondary"
             android:textSize="13sp"
             app:layout_constraintEnd_toStartOf="@id/tvCountdown"
             app:layout_constraintStart_toEndOf="@id/viewStatusStrip"
             app:layout_constraintTop_toBottomOf="@id/tvDecisionTitle"
-            tools:text="Impulse decision logged under stress." />
+            tools:text="Impulse decision logged during a low-energy moment." />
 
         <LinearLayout
             android:id="@+id/tvCountdown"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@drawable/bg_metric_panel"
             android:gravity="center"
             android:orientation="vertical"
+            android:paddingStart="14dp"
+            android:paddingTop="12dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="12dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvStatusBadge">
@@ -113,15 +120,15 @@
             android:layout_width="0dp"
             android:layout_height="6dp"
             android:layout_marginStart="14dp"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="16dp"
             android:layout_marginEnd="14dp"
             app:indicatorColor="@color/primary"
-            app:trackColor="@color/surface_variant"
-            app:trackCornerRadius="999dp"
-            app:trackThickness="6dp"
             app:layout_constraintEnd_toStartOf="@id/tvCountdown"
             app:layout_constraintStart_toEndOf="@id/viewStatusStrip"
-            app:layout_constraintTop_toBottomOf="@id/tvDecisionNote" />
+            app:layout_constraintTop_toBottomOf="@id/tvDecisionNote"
+            app:trackColor="@color/surface_variant"
+            app:trackCornerRadius="999dp"
+            app:trackThickness="6dp" />
 
         <TextView
             android:id="@+id/tvTimeRemaining"
@@ -134,21 +141,20 @@
             app:layout_constraintEnd_toStartOf="@id/tvCountdown"
             app:layout_constraintStart_toEndOf="@id/viewStatusStrip"
             app:layout_constraintTop_toBottomOf="@id/countdownProgress"
-            tools:text="Judgment in 2 days" />
+            tools:text="Judgment in 2 days 4 hours" />
 
         <TextView
             android:id="@+id/tvDecisionDate"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="14dp"
-            android:layout_marginTop="5dp"
+            android:layout_marginTop="6dp"
             android:textColor="@color/text_tertiary"
             android:textSize="11sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/viewStatusStrip"
             app:layout_constraintTop_toBottomOf="@id/tvTimeRemaining"
-            tools:text="Logged 2 hours ago" />
-
+            tools:text="Buried 2 hours ago" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </com.google.android.material.card.MaterialCardView>

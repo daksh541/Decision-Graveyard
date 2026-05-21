@@ -5,6 +5,26 @@
     android:layout_height="match_parent"
     android:background="@drawable/bg_main">
 
+    <View
+        android:layout_width="220dp"
+        android:layout_height="220dp"
+        android:alpha="0.9"
+        android:background="@drawable/bg_auth_orb"
+        android:translationX="-40dp"
+        android:translationY="-24dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        android:alpha="0.6"
+        android:background="@drawable/bg_auth_orb"
+        android:translationX="30dp"
+        android:translationY="40dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <androidx.core.widget.NestedScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -22,48 +42,43 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
             android:orientation="vertical">
-
-            <ImageView
-                android:id="@+id/ivLogo"
-                android:layout_width="78dp"
-                android:layout_height="78dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_surface_card"
-                android:padding="18dp"
-                android:src="@drawable/ic_lock"
-                app:tint="@color/text_primary" />
-
-            <TextView
-                android:id="@+id/tvBrandTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:fontFamily="serif"
-                android:gravity="center"
-                android:text="Decision Graveyard"
-                android:textColor="@color/text_primary"
-                android:textSize="26sp"
-                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvBrandSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center"
-                android:letterSpacing="0.12"
-                android:text="Behavioral intelligence for discipline"
+                android:letterSpacing="0.1"
+                android:text="BEHAVIORAL INTELLIGENCE"
                 android:textAllCaps="true"
+                android:textColor="@color/secondary"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvBrandTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:fontFamily="@font/playfair_display"
+                android:text="Decision Graveyard"
+                android:textColor="@color/text_primary"
+                android:textSize="34sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:lineSpacingExtra="3dp"
+                android:text="A premium self-improvement system for tracking decisions, decoding regret, and rebuilding discipline."
                 android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
+                android:textSize="15sp" />
 
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.DecisionGraveyard.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="26dp">
+                android:layout_marginTop="24dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -92,7 +107,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Create Account" />
+                            android:text="Create" />
                     </com.google.android.material.button.MaterialButtonToggleGroup>
 
                     <TextView
@@ -100,11 +115,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="22dp"
-                        android:fontFamily="serif"
+                        android:fontFamily="@font/playfair_display"
                         android:text="Take Control."
                         android:textColor="@color/text_primary"
-                        android:textSize="24sp"
-                        android:textStyle="bold" />
+                        android:textSize="26sp" />
 
                     <TextView
                         android:id="@+id/tvAuthCaption"
@@ -173,7 +187,7 @@
                         android:layout_gravity="end"
                         android:layout_marginTop="10dp"
                         android:text="Forgot password?"
-                        android:textColor="@color/primary"
+                        android:textColor="@color/secondary"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
@@ -191,9 +205,9 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_horizontal"
                         android:layout_marginTop="18dp"
-                        android:text="OR"
+                        android:text="OR CONTINUE WITH"
                         android:textColor="@color/text_tertiary"
-                        android:textSize="12sp"
+                        android:textSize="11sp"
                         android:textStyle="bold" />
 
                     <com.google.android.gms.common.SignInButton
@@ -208,7 +222,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_horizontal"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="10dp"
                         android:text="Need an account?"
                         android:textColor="@color/text_secondary" />
                 </LinearLayout>

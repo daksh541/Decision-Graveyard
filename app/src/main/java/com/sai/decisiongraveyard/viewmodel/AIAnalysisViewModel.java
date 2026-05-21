@@ -10,12 +10,12 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.sai.decisiongraveyard.model.AiInsightReport;
+import com.sai.decisiongraveyard.model.AnalyticsSnapshot;
 import com.sai.decisiongraveyard.model.DecisionRecord;
 import com.sai.decisiongraveyard.repository.DecisionRepository;
-import com.sai.decisiongraveyard.service.LLMAnalysisService;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -59,12 +59,8 @@ public class AIAnalysisViewModel extends AndroidViewModel {
                     return;
                 }
 
-                // Prepare data for LLM
-                String decisionData = prepareDecisionData(records);
-                
-                // Call LLM service
-                LLMAnalysisService llmService = new LLMAnalysisService();
-                String analysis = llmService.analyzeDecisions(decisionData);
+                AnalyticsSnapshot snapshot = repository.getAnalyticsSnapshot(false);
+                String analysis = buildNarrative(snapshot);
 
                 mainHandler.post(() -> {
                     analysisResult.setValue(analysis);
@@ -79,43 +75,48 @@ public class AIAnalysisViewModel extends AndroidViewModel {
         });
     }
 
-    private String prepareDecisionData(List<DecisionRecord> records) {
+    private String buildNarrative(AnalyticsSnapshot snapshot) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Analyze these decision records and provide personalized insights:\n\n");
-        
-        int goodCount = 0;
-        int badCount = 0;
-        int neutralCount = 0;
-        
-        for (DecisionRecord record : records) {
-            if (record.isEvaluated()) {
-                String outcome = record.getDecision().getOutcome();
-                if ("good".equals(outcome)) {
-                    goodCount++;
-                } else if ("bad".equals(outcome)) {
-                    badCount++;
-                } else {
-                    neutralCount++;
-                }
-                
-                sb.append(String.format(Locale.getDefault(), "- Decision: %s\n", record.getDecision().getTitle()));
-                sb.append(String.format(Locale.getDefault(), "  Category: %s\n", record.getDecision().getCategory()));
-                sb.append(String.format(Locale.getDefault(), "  Outcome: %s\n", outcome));
-                if (record.getDecision().getReflectionNotes() != null && !record.getDecision().getReflectionNotes().isEmpty()) {
-                    sb.append(String.format(Locale.getDefault(), "  Notes: %s\n", record.getDecision().getReflectionNotes()));
-                }
-                sb.append("\n");
-            }
+        AiInsightReport report = snapshot.getAiInsightReport();
+        sb.append(report.getCoachPersona().isEmpty() ? "Signal Coach" : report.getCoachPersona()).append("\n\n");
+        sb.append(report.getSummary()).append("\n\n");
+        sb.append("Behavior score: ").append(report.getBehaviorScore()).append("/100\n");
+        sb.append("Discipline score: ").append(report.getDisciplineScore()).append("/100\n");
+        sb.append("Risk pressure: ").append(report.getRiskScore()).append("/100\n\n");
+
+        if (!report.getBrainPattern().isEmpty()) {
+            sb.append("Brain pattern\n").append(report.getBrainPattern()).append("\n\n");
         }
-        
-        sb.append(String.format(Locale.getDefault(), "Summary: %d good, %d bad, %d neutral decisions\n", goodCount, badCount, neutralCount));
-        sb.append("\nPlease provide:\n");
-        sb.append("1. Overall assessment of decision quality\n");
-        sb.append("2. Patterns in good vs bad decisions\n");
-        sb.append("3. Categories that need attention\n");
-        sb.append("4. Specific actionable advice\n");
-        sb.append("5. Encouragement based on progress\n");
-        
+        if (!report.getWeeklyReport().isEmpty()) {
+            sb.append("Weekly report\n").append(report.getWeeklyReport()).append("\n\n");
+        }
+        if (!report.getEmotionalPattern().isEmpty()) {
+            sb.append("Emotional pattern\n").append(report.getEmotionalPattern()).append("\n\n");
+        }
+        if (!report.getActivityCorrelation().isEmpty()) {
+            sb.append("Activity correlation\n").append(report.getActivityCorrelation()).append("\n\n");
+        }
+        if (!report.getRecoverySuggestion().isEmpty()) {
+            sb.append("Recovery suggestion\n").append(report.getRecoverySuggestion()).append("\n\n");
+        }
+
+        if (!report.getInsightCards().isEmpty()) {
+            sb.append("Key insights\n");
+            for (String insight : report.getInsightCards()) {
+                sb.append("• ").append(insight).append('\n');
+            }
+            sb.append('\n');
+        }
+        if (!report.getRecommendations().isEmpty()) {
+            sb.append("Recommended next moves\n");
+            for (String insight : report.getRecommendations()) {
+                sb.append("• ").append(insight).append('\n');
+            }
+            sb.append('\n');
+        }
+        if (!report.getQuote().isEmpty()) {
+            sb.append(report.getQuote());
+        }
         return sb.toString();
     }
 

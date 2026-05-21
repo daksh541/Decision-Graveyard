@@ -15,7 +15,7 @@ public final class ThemeManager {
 
     public static void applySavedTheme(Context context) {
         boolean darkMode = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                .getBoolean(KEY_DARK_MODE, false);
+                .getBoolean(KEY_DARK_MODE, true);
         AppCompatDelegate.setDefaultNightMode(
                 darkMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
         );
@@ -23,7 +23,7 @@ public final class ThemeManager {
 
     public static void toggleTheme(Context context) {
         SharedPreferences preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        boolean darkMode = preferences.getBoolean(KEY_DARK_MODE, false);
+        boolean darkMode = preferences.getBoolean(KEY_DARK_MODE, true);
         preferences.edit().putBoolean(KEY_DARK_MODE, !darkMode).apply();
         applySavedTheme(context);
     }

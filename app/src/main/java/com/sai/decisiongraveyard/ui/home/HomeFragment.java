@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -61,6 +62,7 @@ public class HomeFragment extends Fragment {
         });
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setAdapter(decisionAdapter);
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
 
         // Add swipe-to-evaluate functionality
         DecisionSwipeCallback swipeCallback = new DecisionSwipeCallback(decisionAdapter, new DecisionSwipeCallback.OnSwipeListener() {
@@ -124,10 +126,10 @@ public class HomeFragment extends Fragment {
                 return;
             }
             if (state.totalCount == 0) {
-                tvHomeHeadline.setText("Start logging the choices you want to review later");
+                tvHomeHeadline.setText("Start logging the choices you want to review later.");
             } else {
                 tvHomeHeadline.setText(
-                        state.readyCount + " ready for review • " + state.upcomingCount + " still waiting"
+                        state.readyCount + " ready for review • " + state.upcomingCount + " still incubating"
                 );
             }
             decisionAdapter.submitList(state.filteredRecords);
