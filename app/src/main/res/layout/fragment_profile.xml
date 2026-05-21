@@ -475,24 +475,32 @@
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipGoalFitness"
                         style="@style/Widget.DecisionGraveyard.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:checkable="true"
                         android:text="Fitness" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipGoalStudy"
                         style="@style/Widget.DecisionGraveyard.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:checkable="true"
                         android:text="Study" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipGoalProductivity"
                         style="@style/Widget.DecisionGraveyard.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:checkable="true"
                         android:text="Productivity" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipGoalFinance"
                         style="@style/Widget.DecisionGraveyard.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:checkable="true"
                         android:text="Finance" />
                 </com.google.android.material.chip.ChipGroup>

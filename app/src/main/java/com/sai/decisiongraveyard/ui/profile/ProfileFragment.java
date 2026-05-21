@@ -1,5 +1,6 @@
 package com.sai.decisiongraveyard.ui.profile;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.SeekBar;
@@ -29,6 +30,8 @@ import com.sai.decisiongraveyard.util.ThemeManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ProfileFragment extends Fragment {
 
@@ -63,6 +66,8 @@ public class ProfileFragment extends Fragment {
     private MaterialButton btnLogout;
 
     private boolean bindingThemeSwitch;
+    private final ExecutorService backgroundExecutor = Executors.newSingleThreadExecutor();
+    private boolean hasLoadedData;
 
     public ProfileFragment() {
         super(R.layout.fragment_profile);
@@ -75,29 +80,58 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull android.view.View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        try {
+            auth = FirebaseAuth.getInstance();
+            RepositoryProvider provider = RepositoryProvider.getInstance(view.getContext());
+            decisionRepository = provider.getDecisionRepository();
+            userProfileRepository = provider.getUserProfileRepository();
+            userPreferencesRepository = provider.getUserPreferencesRepository();
 
-        auth = FirebaseAuth.getInstance();
-        RepositoryProvider provider = RepositoryProvider.getInstance(requireContext());
-        decisionRepository = provider.getDecisionRepository();
-        userProfileRepository = provider.getUserProfileRepository();
-        userPreferencesRepository = provider.getUserPreferencesRepository();
-
-        bindViews(view);
-        setupListeners();
-        loadUserData();
-        loadPreferences();
+            bindViews(view);
+            setupListeners();
+            populateIdentity();
+            view.post(this::loadProfileContentIfNeeded);
+        } catch (RuntimeException exception) {
+            showToast(exception.getMessage() == null ? "Profile failed to open." : exception.getMessage());
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        FirebaseUser currentUser = auth.getCurrentUser();
-        if (currentUser != null) {
-            tvUserEmail.setText(currentUser.getEmail());
-            tvMemberSince.setText(getString(R.string.profile_member_since_label) + " • " + formatMemberSince(currentUser));
+        if (auth == null) {
+            return;
         }
+        populateIdentity();
         syncThemeSwitch();
-        loadUserData();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        hasLoadedData = false;
+        tvUserEmail = null;
+        tvUserLevel = null;
+        tvXpProgress = null;
+        tvTotalDecisions = null;
+        tvEvaluatedDecisions = null;
+        tvPendingDecisions = null;
+        tvActivityCompletionRate = null;
+        tvDisciplineStreak = null;
+        tvMemberSince = null;
+        tvNotificationIntensity = null;
+        tvReminderValue = null;
+        switchDarkTheme = null;
+        switchBrutalMode = null;
+        switchDailySummary = null;
+        switchWeeklyReport = null;
+        seekReminderMinutes = null;
+        chipGoalFitness = null;
+        chipGoalStudy = null;
+        chipGoalProductivity = null;
+        chipGoalFinance = null;
+        btnSavePreferences = null;
+        btnLogout = null;
     }
 
     private void bindViews(android.view.View view) {
@@ -124,41 +158,87 @@ public class ProfileFragment extends Fragment {
         btnSavePreferences = view.findViewById(R.id.btnSavePreferences);
         btnLogout = view.findViewById(R.id.btnLogout);
 
-        seekReminderMinutes.setMax(REMINDER_OPTIONS.length - 1);
+        if (seekReminderMinutes != null) {
+            seekReminderMinutes.setMax(REMINDER_OPTIONS.length - 1);
+        }
         syncThemeSwitch();
     }
 
+    private void populateIdentity() {
+        FirebaseUser currentUser = auth == null ? null : auth.getCurrentUser();
+        if (currentUser == null) {
+            return;
+        }
+        if (tvUserEmail != null) {
+            tvUserEmail.setText(currentUser.getEmail());
+        }
+        if (tvMemberSince != null) {
+            tvMemberSince.setText(getString(R.string.profile_member_since_label) + " • " + formatMemberSince(currentUser));
+        }
+    }
+
+    private void loadProfileContentIfNeeded() {
+        if (hasLoadedData || !isAdded()) {
+            return;
+        }
+        hasLoadedData = true;
+        loadUserData();
+        loadPreferences();
+    }
+
     private void setupListeners() {
-        btnSavePreferences.setOnClickListener(v -> savePreferences());
-        btnLogout.setOnClickListener(v -> showLogoutConfirmation());
-        switchDarkTheme.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (bindingThemeSwitch) {
-                return;
-            }
-            ThemeManager.toggleTheme(requireContext());
-            requireActivity().recreate();
-        });
-        switchBrutalMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            tvNotificationIntensity.setText(isChecked ? "Brutal" : "Normal");
-            tvNotificationIntensity.setBackgroundResource(isChecked ? R.drawable.bg_badge_danger : R.drawable.bg_badge_surface);
-        });
-        seekReminderMinutes.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                tvReminderValue.setText(REMINDER_OPTIONS[progress] + " min");
-            }
+        if (btnSavePreferences != null) {
+            btnSavePreferences.setOnClickListener(v -> savePreferences());
+        }
+        if (btnLogout != null) {
+            btnLogout.setOnClickListener(v -> showLogoutConfirmation());
+        }
+        if (switchDarkTheme != null) {
+            switchDarkTheme.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (bindingThemeSwitch) {
+                    return;
+                }
+                Activity activity = getActivity();
+                if (activity == null) {
+                    return;
+                }
+                ThemeManager.toggleTheme(activity);
+                activity.recreate();
+            });
+        }
+        if (switchBrutalMode != null) {
+            switchBrutalMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (tvNotificationIntensity == null) {
+                    return;
+                }
+                tvNotificationIntensity.setText(isChecked ? "Brutal" : "Normal");
+                tvNotificationIntensity.setBackgroundResource(isChecked ? R.drawable.bg_badge_danger : R.drawable.bg_badge_surface);
+            });
+        }
+        if (seekReminderMinutes != null) {
+            seekReminderMinutes.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (tvReminderValue != null) {
+                        tvReminderValue.setText(REMINDER_OPTIONS[progress] + " min");
+                    }
+                }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                }
 
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
-        });
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                }
+            });
+        }
     }
 
     private void syncThemeSwitch() {
+        if (switchDarkTheme == null) {
+            return;
+        }
         bindingThemeSwitch = true;
         int nightMode = AppCompatDelegate.getDefaultNightMode();
         boolean darkEnabled = nightMode == AppCompatDelegate.MODE_NIGHT_YES
@@ -170,40 +250,58 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadUserData() {
-        userProfileRepository.getUserProfile(new UserProfileRepository.ProfileCallback() {
-            @Override
-            public void onSuccess(com.sai.decisiongraveyard.model.UserProfile profile) {
-                if (!isAdded()) {
-                    return;
-                }
-                requireActivity().runOnUiThread(() -> {
-                    tvUserLevel.setText("Level " + profile.getCurrentLevel() + " • " + profile.getLevelName());
-                    tvXpProgress.setText(profile.getCurrentXP() + " / " + profile.getXpToNextLevel() + " XP");
-                    tvActivityCompletionRate.setText(String.format(Locale.getDefault(), "%.0f%%", profile.getActivityCompletionRate()));
-                    tvDisciplineStreak.setText(String.valueOf(profile.getDailyDisciplineStreak()));
-                });
+        if (auth == null || auth.getCurrentUser() == null) {
+            if (isAdded()) {
+                redirectToLogin();
             }
+            return;
+        }
 
-            @Override
-            public void onError(String error) {
-                if (!isAdded()) {
-                    return;
+        try {
+            userProfileRepository.getUserProfile(new UserProfileRepository.ProfileCallback() {
+                @Override
+                public void onSuccess(com.sai.decisiongraveyard.model.UserProfile profile) {
+                    runIfActive(() -> {
+                        if (tvUserLevel != null) {
+                            tvUserLevel.setText("Level " + profile.getCurrentLevel() + " • " + profile.getLevelName());
+                        }
+                        if (tvXpProgress != null) {
+                            tvXpProgress.setText(profile.getCurrentXP() + " / " + profile.getXpToNextLevel() + " XP");
+                        }
+                        if (tvActivityCompletionRate != null) {
+                            tvActivityCompletionRate.setText(String.format(Locale.getDefault(), "%.0f%%", profile.getActivityCompletionRate()));
+                        }
+                        if (tvDisciplineStreak != null) {
+                            tvDisciplineStreak.setText(String.valueOf(profile.getDailyDisciplineStreak()));
+                        }
+                    });
                 }
-                requireActivity().runOnUiThread(() -> {
-                    tvUserLevel.setText(getString(R.string.profile_level_unknown));
-                    tvXpProgress.setText(getString(R.string.profile_xp_unavailable));
-                });
-            }
-        });
 
-        new Thread(() -> {
+                @Override
+                public void onError(String error) {
+                    runIfActive(() -> {
+                        if (tvUserLevel != null) {
+                            tvUserLevel.setText(getString(R.string.profile_level_unknown));
+                        }
+                        if (tvXpProgress != null) {
+                            tvXpProgress.setText(getString(R.string.profile_xp_unavailable));
+                        }
+                    });
+                }
+            });
+        } catch (RuntimeException exception) {
+            showToast(exception.getMessage() == null ? "Failed to load profile." : exception.getMessage());
+            return;
+        }
+
+        backgroundExecutor.execute(() -> {
             try {
-                var records = decisionRepository.getAllDecisionRecords();
+                List<com.sai.decisiongraveyard.model.DecisionRecord> records = decisionRepository.getAllDecisionRecords();
                 int total = records.size();
                 int evaluated = 0;
                 int pending = 0;
 
-                for (var record : records) {
+                for (com.sai.decisiongraveyard.model.DecisionRecord record : records) {
                     if (record.isEvaluated()) {
                         evaluated++;
                     } else if (!record.isReadyForReview()) {
@@ -211,66 +309,96 @@ public class ProfileFragment extends Fragment {
                     }
                 }
 
-                final int finalTotal = total;
-                final int finalEvaluated = evaluated;
-                final int finalPending = pending;
-
-                requireActivity().runOnUiThread(() -> {
-                    tvTotalDecisions.setText(String.valueOf(finalTotal));
-                    tvEvaluatedDecisions.setText(String.valueOf(finalEvaluated));
-                    tvPendingDecisions.setText(String.valueOf(finalPending));
+                final int totalCount = total;
+                final int evaluatedCount = evaluated;
+                final int pendingCount = pending;
+                runIfActive(() -> {
+                    if (tvTotalDecisions != null) {
+                        tvTotalDecisions.setText(String.valueOf(totalCount));
+                    }
+                    if (tvEvaluatedDecisions != null) {
+                        tvEvaluatedDecisions.setText(String.valueOf(evaluatedCount));
+                    }
+                    if (tvPendingDecisions != null) {
+                        tvPendingDecisions.setText(String.valueOf(pendingCount));
+                    }
                 });
-            } catch (Exception e) {
-                if (!isAdded()) {
-                    return;
-                }
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(requireContext(), "Failed to load stats", Toast.LENGTH_SHORT).show()
-                );
-            }
-        }).start();
-    }
-
-    private void loadPreferences() {
-        userPreferencesRepository.getUserPreferences(new UserPreferencesRepository.PreferencesCallback() {
-            @Override
-            public void onSuccess(com.sai.decisiongraveyard.model.UserPreferences preferences) {
-                if (!isAdded()) {
-                    return;
-                }
-                requireActivity().runOnUiThread(() -> {
-                    boolean brutalMode = "brutal".equalsIgnoreCase(preferences.getNotificationIntensity());
-                    switchBrutalMode.setChecked(brutalMode);
-                    switchDailySummary.setChecked(preferences.isDailySummaryEnabled());
-                    switchWeeklyReport.setChecked(preferences.isWeeklyReportEnabled());
-                    tvNotificationIntensity.setText(brutalMode ? "Brutal" : "Normal");
-                    tvNotificationIntensity.setBackgroundResource(brutalMode ? R.drawable.bg_badge_danger : R.drawable.bg_badge_surface);
-
-                    int reminderIndex = reminderIndexFor(preferences.getPreMissReminderMinutes());
-                    seekReminderMinutes.setProgress(reminderIndex);
-                    tvReminderValue.setText(REMINDER_OPTIONS[reminderIndex] + " min");
-
-                    List<String> goals = preferences.getSelectedGoals();
-                    chipGoalFitness.setChecked(goals != null && goals.contains("fitness"));
-                    chipGoalStudy.setChecked(goals != null && goals.contains("study"));
-                    chipGoalProductivity.setChecked(goals != null && goals.contains("productivity"));
-                    chipGoalFinance.setChecked(goals != null && goals.contains("finance"));
-                });
-            }
-
-            @Override
-            public void onError(String error) {
-                if (!isAdded()) {
-                    return;
-                }
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
-                );
+            } catch (Exception exception) {
+                showToast("Failed to load stats.");
             }
         });
     }
 
+    private void loadPreferences() {
+        if (auth == null || auth.getCurrentUser() == null) {
+            return;
+        }
+
+        try {
+            userPreferencesRepository.getUserPreferences(new UserPreferencesRepository.PreferencesCallback() {
+                @Override
+                public void onSuccess(com.sai.decisiongraveyard.model.UserPreferences preferences) {
+                    runIfActive(() -> {
+                        boolean brutalMode = "brutal".equalsIgnoreCase(preferences.getNotificationIntensity());
+                        if (switchBrutalMode != null) {
+                            switchBrutalMode.setChecked(brutalMode);
+                        }
+                        if (switchDailySummary != null) {
+                            switchDailySummary.setChecked(preferences.isDailySummaryEnabled());
+                        }
+                        if (switchWeeklyReport != null) {
+                            switchWeeklyReport.setChecked(preferences.isWeeklyReportEnabled());
+                        }
+                        if (tvNotificationIntensity != null) {
+                            tvNotificationIntensity.setText(brutalMode ? "Brutal" : "Normal");
+                            tvNotificationIntensity.setBackgroundResource(brutalMode ? R.drawable.bg_badge_danger : R.drawable.bg_badge_surface);
+                        }
+
+                        int reminderIndex = reminderIndexFor(preferences.getPreMissReminderMinutes());
+                        if (seekReminderMinutes != null) {
+                            seekReminderMinutes.setProgress(reminderIndex);
+                        }
+                        if (tvReminderValue != null) {
+                            tvReminderValue.setText(REMINDER_OPTIONS[reminderIndex] + " min");
+                        }
+
+                        List<String> goals = preferences.getSelectedGoals();
+                        if (chipGoalFitness != null) {
+                            chipGoalFitness.setChecked(goals != null && goals.contains("fitness"));
+                        }
+                        if (chipGoalStudy != null) {
+                            chipGoalStudy.setChecked(goals != null && goals.contains("study"));
+                        }
+                        if (chipGoalProductivity != null) {
+                            chipGoalProductivity.setChecked(goals != null && goals.contains("productivity"));
+                        }
+                        if (chipGoalFinance != null) {
+                            chipGoalFinance.setChecked(goals != null && goals.contains("finance"));
+                        }
+                    });
+                }
+
+                @Override
+                public void onError(String error) {
+                    showToast(error == null ? "Failed to load preferences." : error);
+                }
+            });
+        } catch (RuntimeException exception) {
+            showToast(exception.getMessage() == null ? "Failed to load preferences." : exception.getMessage());
+        }
+    }
+
     private void savePreferences() {
+        if (switchBrutalMode == null || switchDailySummary == null || switchWeeklyReport == null || seekReminderMinutes == null) {
+            showToast("Profile UI is not ready yet.");
+            return;
+        }
+
+        if (auth == null || auth.getCurrentUser() == null) {
+            redirectToLogin();
+            return;
+        }
+
         com.sai.decisiongraveyard.model.UserPreferences preferences = new com.sai.decisiongraveyard.model.UserPreferences();
         preferences.setNotificationIntensity(switchBrutalMode.isChecked() ? "brutal" : "normal");
         preferences.setDailySummaryEnabled(switchDailySummary.isChecked());
@@ -278,41 +406,35 @@ public class ProfileFragment extends Fragment {
         preferences.setPreMissReminderMinutes(REMINDER_OPTIONS[seekReminderMinutes.getProgress()]);
         preferences.setSelectedGoals(getSelectedGoals());
 
-        userPreferencesRepository.updateUserPreferences(preferences, new UserPreferencesRepository.ActionCallback() {
-            @Override
-            public void onSuccess() {
-                if (!isAdded()) {
-                    return;
+        try {
+            userPreferencesRepository.updateUserPreferences(preferences, new UserPreferencesRepository.ActionCallback() {
+                @Override
+                public void onSuccess() {
+                    showToast(getString(R.string.profile_preferences_saved));
                 }
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(requireContext(), getString(R.string.profile_preferences_saved), Toast.LENGTH_SHORT).show()
-                );
-            }
 
-            @Override
-            public void onError(String error) {
-                if (!isAdded()) {
-                    return;
+                @Override
+                public void onError(String error) {
+                    showToast(error == null ? "Failed to save preferences." : error);
                 }
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
-                );
-            }
-        });
+            });
+        } catch (RuntimeException exception) {
+            showToast(exception.getMessage() == null ? "Failed to save preferences." : exception.getMessage());
+        }
     }
 
     private List<String> getSelectedGoals() {
         List<String> goals = new ArrayList<>();
-        if (chipGoalFitness.isChecked()) {
+        if (chipGoalFitness != null && chipGoalFitness.isChecked()) {
             goals.add("fitness");
         }
-        if (chipGoalStudy.isChecked()) {
+        if (chipGoalStudy != null && chipGoalStudy.isChecked()) {
             goals.add("study");
         }
-        if (chipGoalProductivity.isChecked()) {
+        if (chipGoalProductivity != null && chipGoalProductivity.isChecked()) {
             goals.add("productivity");
         }
-        if (chipGoalFinance.isChecked()) {
+        if (chipGoalFinance != null && chipGoalFinance.isChecked()) {
             goals.add("finance");
         }
         return goals;
@@ -328,7 +450,11 @@ public class ProfileFragment extends Fragment {
     }
 
     private void showLogoutConfirmation() {
-        new AlertDialog.Builder(requireContext())
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+        new AlertDialog.Builder(activity)
                 .setTitle(getString(R.string.logout))
                 .setMessage(R.string.logout_confirmation)
                 .setPositiveButton(getString(R.string.logout), (dialog, which) -> performLogout())
@@ -337,15 +463,39 @@ public class ProfileFragment extends Fragment {
     }
 
     private void performLogout() {
-        auth.signOut();
+        if (auth != null) {
+            auth.signOut();
+        }
         redirectToLogin();
     }
 
     private void redirectToLogin() {
-        Intent intent = new Intent(requireContext(), LoginActivity.class);
+        Activity activity = getActivity();
+        if (!isAdded() || activity == null) {
+            return;
+        }
+        Intent intent = new Intent(activity, LoginActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
-        requireActivity().finish();
+        activity.finish();
+    }
+
+    private void runIfActive(@NonNull Runnable action) {
+        Activity activity = getActivity();
+        if (!isAdded() || activity == null) {
+            return;
+        }
+        activity.runOnUiThread(action);
+    }
+
+    private void showToast(@NonNull String message) {
+        runIfActive(() -> {
+            Activity activity = getActivity();
+            if (activity == null) {
+                return;
+            }
+            Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
+        });
     }
 
     private String formatMemberSince(FirebaseUser currentUser) {

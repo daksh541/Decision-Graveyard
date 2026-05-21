@@ -61,7 +61,13 @@ public class UserProfileRepository {
     }
 
     public void getUserProfile(ProfileCallback callback) {
-        String userId = requireUserId();
+        String userId;
+        try {
+            userId = requireUserId();
+        } catch (IllegalStateException exception) {
+            callback.onError(exception.getMessage() == null ? "User not authenticated" : exception.getMessage());
+            return;
+        }
 
         profileDocument(userId)
                 .get()
@@ -87,7 +93,13 @@ public class UserProfileRepository {
     }
 
     public void updateUserProfile(UserProfile profile, ActionCallback callback) {
-        String userId = requireUserId();
+        String userId;
+        try {
+            userId = requireUserId();
+        } catch (IllegalStateException exception) {
+            callback.onError(exception.getMessage() == null ? "User not authenticated" : exception.getMessage());
+            return;
+        }
         profile.setUserId(userId);
         if (profile.getCreatedAt() == null) {
             profile.setCreatedAt(Timestamp.now());

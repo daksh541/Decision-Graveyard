@@ -48,7 +48,13 @@ public class UserPreferencesRepository {
     }
 
     public void getUserPreferences(PreferencesCallback callback) {
-        String userId = requireUserId();
+        String userId;
+        try {
+            userId = requireUserId();
+        } catch (IllegalStateException exception) {
+            callback.onError(exception.getMessage() == null ? "User not authenticated" : exception.getMessage());
+            return;
+        }
 
         preferencesDocument(userId)
                 .get()
@@ -74,7 +80,13 @@ public class UserPreferencesRepository {
     }
 
     public void updateUserPreferences(UserPreferences preferences, ActionCallback callback) {
-        String userId = requireUserId();
+        String userId;
+        try {
+            userId = requireUserId();
+        } catch (IllegalStateException exception) {
+            callback.onError(exception.getMessage() == null ? "User not authenticated" : exception.getMessage());
+            return;
+        }
         preferences.setUserId(userId);
         if (preferences.getCreatedAt() == null) {
             preferences.setCreatedAt(Timestamp.now());

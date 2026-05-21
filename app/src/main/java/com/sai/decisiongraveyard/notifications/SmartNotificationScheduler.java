@@ -14,6 +14,7 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.sai.decisiongraveyard.R;
 import com.sai.decisiongraveyard.repository.ActivityRepository;
 import com.sai.decisiongraveyard.repository.DecisionRepository;
@@ -28,9 +29,14 @@ public class SmartNotificationScheduler {
     private static final String CHANNEL_ID_DAILY = "daily_summary_channel";
     private static final String CHANNEL_ID_WEEKLY = "weekly_report_channel";
     private static final String CHANNEL_ID_BEHAVIORAL = "behavioral_trigger_channel";
+    private static final String UNIQUE_BEHAVIORAL_WORK = "behavioral_trigger_worker";
     private static final String TAG = "SmartNotificationScheduler";
 
     public static void scheduleDailySummary(Context context) {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            Log.d(TAG, "Skipping daily summary scheduling because no user is signed in");
+            return;
+        }
         UserPreferencesRepository preferencesRepo = com.sai.decisiongraveyard.repository.RepositoryProvider.getInstance(context).getUserPreferencesRepository();
         preferencesRepo.getUserPreferences(new UserPreferencesRepository.PreferencesCallback() {
             @Override
@@ -65,6 +71,10 @@ public class SmartNotificationScheduler {
     }
 
     public static void scheduleWeeklyReport(Context context) {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            Log.d(TAG, "Skipping weekly report scheduling because no user is signed in");
+            return;
+        }
         UserPreferencesRepository preferencesRepo = com.sai.decisiongraveyard.repository.RepositoryProvider.getInstance(context).getUserPreferencesRepository();
         preferencesRepo.getUserPreferences(new UserPreferencesRepository.PreferencesCallback() {
             @Override
@@ -100,13 +110,21 @@ public class SmartNotificationScheduler {
     }
 
     public static void scheduleBehavioralTrigger(Context context) {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            Log.d(TAG, "Skipping behavioral trigger scheduling because no user is signed in");
+            return;
+        }
         // Schedule periodic check for behavioral triggers using WorkManager
         PeriodicWorkRequest behavioralCheck = new PeriodicWorkRequest.Builder(
                 BehavioralTriggerWorker.class,
                 6, TimeUnit.HOURS
         ).build();
 
-        WorkManager.getInstance(context).enqueue(behavioralCheck);
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                UNIQUE_BEHAVIORAL_WORK,
+                androidx.work.ExistingPeriodicWorkPolicy.UPDATE,
+                behavioralCheck
+        );
         Log.d(TAG, "Behavioral trigger worker scheduled");
     }
 
